@@ -1,0 +1,57 @@
+{
+  "_comment": "Maps CSS selectors/classes to collection field slugs. Key format: '{collection}:{cssClass}'",
+  "mappings": [
+    {
+      "collection": "Pages - Hero Sections",
+      "cssClass": ".main-heading",
+      "fieldSlug": "heading"
+    },
+    {
+      "collection": "Pages - Hero Sections",
+      "cssClass": ".paragraph-hero.homepage-header",
+      "fieldSlug": "paragraph"
+    },
+    {
+      "collection": "Pages - Hero Sections",
+      "cssClass": ".hero-button",
+      "fieldSlugText": "cta-text",
+      "fieldSlugHref": "cta-page-link-2",
+      "note": "Check whether change is text or href"
+    },
+    {
+      "collection": "Coaches",
+      "cssClass": ".coach-profession",
+      "fieldSlug": "designation"
+    },
+    {
+      "collection": "Programs",
+      "cssClass": ".header-subheading",
+      "fieldSlug": "description"
+    },
+    {
+      "collection": "Programs",
+      "cssClass": ".fc-white",
+      "fieldSlug": "description",
+      "context": "programs section"
+    },
+    {
+      "collection": "Programs",
+      "elementId": "qa-homepage-topprograms-subtitle",
+      "fieldSlug": "description"
+    },
+    {
+      "collection": "GROW Entries",
+      "cssClass": ".grow-twilio-phone-number",
+      "fieldSlug": "grow-twilio-phone-number"
+    },
+    {
+      "collection": "Amenities",
+      "cssClass": ".amenity-name",
+      "fieldSlug": "name"
+    }
+  ],
+  "notes": {
+    "richTextFields": "Preserve existing HTML structure when updating rich text fields",
+    "skipGetCollectionDetails": "If URL+CSS class matches this table exactly, use field slug directly — skip get_collection_details"
+  }
+}

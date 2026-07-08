@@ -1,0 +1,28 @@
+{
+  "_comment": "Maps URL patterns to Webflow collection names. Order matters — more specific patterns first.",
+  "exactRoutes": {
+    "/": "Pages - Hero Sections",
+    "/contact": "GROW Entries",
+    "/schedule": "Pages - Hero Sections",
+    "/about": "Pages - Hero Sections"
+  },
+  "prefixRoutes": [
+    { "prefix": "/programs/", "collection": "Programs" },
+    { "prefix": "/coaches/", "collection": "Coaches" },
+    { "prefix": "/locations/", "collection": "Locations" },
+    { "prefix": "/blog/", "collection": "Blog: Articles" },
+    { "prefix": "/events/", "collection": "Events/Challenges" },
+    { "prefix": "/careers/", "collection": "Careers" },
+    { "prefix": "/local-guide/", "collection": "Local Guide: Articles" }
+  ],
+  "crossCollectionOverrides": {
+    "/programs/{slug}": {
+      "section.cta-section": "CTA Sections",
+      "section.faqs-section": "FAQs"
+    }
+  },
+  "notes": {
+    "homepageProgramsSection": "URL '/' + selector contains 'w-dyn-items' in programs section → Programs collection",
+    "wDynItem": "Any URL + selector contains 'w-dyn-item' → CMS path regardless of URL"
+  }
+}

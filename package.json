@@ -1,0 +1,19 @@
+{
+  "name": "webflow-text-updater",
+  "version": "1.0.0",
+  "description": "Automated Webflow CMS + static text updates triggered from Linear tickets",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "dry-run": "DRY_RUN=true node src/index.js",
+    "test": "node --test src/**/*.test.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "node-fetch": "^3.3.2"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

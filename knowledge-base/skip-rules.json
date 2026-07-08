@@ -1,0 +1,64 @@
+{
+  "_comment": "Conditions that cause a ticket to be skipped without processing",
+  "skipConditions": [
+    {
+      "id": "h1-tag",
+      "description": "HTML target is an H1 tag",
+      "check": "htmlSnapshot matches <h1",
+      "comment": "⚠️ Automation skipped — H1 tag changes are out of scope."
+    },
+    {
+      "id": "iframe-embed",
+      "description": "HTML is an iframe or embed element",
+      "check": "htmlSnapshot matches <iframe or selector contains 'embed'",
+      "comment": "⚠️ Automation skipped — iframe/embed elements are out of scope."
+    },
+    {
+      "id": "w-embed",
+      "description": "Selector path contains w-embed",
+      "check": "selectorPath contains 'w-embed'",
+      "comment": "⚠️ Automation skipped — w-embed element. Not editable via API. Needs manual Webflow Designer edit."
+    },
+    {
+      "id": "photo-change",
+      "description": "Request is a photo or image change",
+      "check": "newValue references image/photo/logo",
+      "comment": "⚠️ Automation skipped — image changes are not yet automatable."
+    },
+    {
+      "id": "page-removal",
+      "description": "Request is a page removal or element deletion",
+      "check": "newValue is empty or implies deletion",
+      "comment": "⚠️ Automation skipped — page/element removal is out of scope."
+    },
+    {
+      "id": "non-inferrable",
+      "description": "New value cannot be inferred from the ticket",
+      "check": "newValue is vague (e.g. 'update from website', 'see attachment')",
+      "comment": "⚠️ Automation skipped — new value not inferrable from ticket."
+    },
+    {
+      "id": "static-faq-heading",
+      "description": "Static FAQ section heading (hardcoded)",
+      "check": "selector inside section.faqs-section AND element is h2 'Questions? We have the answers!'",
+      "comment": "⚠️ Automation skipped — static FAQ heading is hardcoded, not editable via API."
+    },
+    {
+      "id": "shared-locations-conflict",
+      "description": "Multiple program-page tickets requesting different values for the same Locations field",
+      "check": "multiple tickets targeting same Locations item with different values",
+      "comment": "⚠️ Automation skipped — conflicting Locations field values across tickets. Manual resolution required."
+    },
+    {
+      "id": "static-element-not-found",
+      "description": "Static element could not be located via Data API",
+      "check": "data_element_tool query_elements returns no match",
+      "comment": "⚠️ Automation skipped — static element not found via Designer API. Needs manual Webflow Designer edit."
+    }
+  ],
+  "labelActionsOnSkip": {
+    "remove": ["aiAvailable", "aiTextChange"],
+    "keep": ["aiReviewed"],
+    "doNotAdd": ["aiEdited"]
+  }
+}
