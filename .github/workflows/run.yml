@@ -1,11 +1,7 @@
 name: Webflow Text Updater
 
 on:
-  # Run every 2 hours
-  schedule:
-    - cron: '0 */2 * * *'
-
-  # Manual trigger with optional batch URL override
+  # Manual trigger only -- enable schedule when ready for autonomous runs
   workflow_dispatch:
     inputs:
       batch_url:
@@ -13,7 +9,7 @@ on:
         required: false
         type: string
       dry_run:
-        description: 'Dry run — read only, no writes'
+        description: 'Dry run -- read only, no writes'
         required: false
         type: boolean
         default: false
@@ -31,7 +27,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
 
       - name: Install dependencies
@@ -39,19 +35,12 @@ jobs:
 
       - name: Run updater
         env:
-          # Webflow tokens — stored in GitHub Actions Secrets
           WEBFLOW_API_TOKEN_1: ${{ secrets.WEBFLOW_API_TOKEN_1 }}
           WEBFLOW_API_TOKEN_2: ${{ secrets.WEBFLOW_API_TOKEN_2 }}
           WEBFLOW_API_TOKEN_3: ${{ secrets.WEBFLOW_API_TOKEN_3 }}
           WEBFLOW_API_TOKEN_4: ${{ secrets.WEBFLOW_API_TOKEN_4 }}
-
-          # BugHerd — stored in GitHub Actions Secrets
           BUGHERD_API_KEY: ${{ secrets.BUGHERD_API_KEY }}
-
-          # Linear — stored in GitHub Actions Secrets
           LINEAR_API_KEY: ${{ secrets.LINEAR_API_KEY }}
-
-          # Optional overrides from manual trigger
           BATCH_URL: ${{ inputs.batch_url }}
           DRY_RUN: ${{ inputs.dry_run || 'false' }}
 
