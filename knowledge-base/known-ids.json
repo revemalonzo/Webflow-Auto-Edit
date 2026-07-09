@@ -10,7 +10,9 @@
     },
     "states": {
       "editPassToQA": "ed78eb42-1372-45c6-a349-25607f52344e",
-      "newEdit": "4513beec-0fff-44d3-a703-041e26827cf2"
+      "newEdit": "4513beec-0fff-44d3-a703-041e26827cf2",
+      "liveEditsQueue": "93a7a9eb-b83b-4d27-8aab-7a37142be8bb",
+      "notLiveEditsQueue": "228e5e75-61ff-4c65-8d34-d1e5966942dd"
     }
   },
   "webflow": {
