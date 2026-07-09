@@ -133,7 +133,7 @@ export async function postComment(issueId, body, dryRun = false) {
 /** Set or clear an issue's parent. Pass null to detach. */
 export async function setParent(issueId, parentId, dryRun = false) {
   if (dryRun) {
-    console.log(`[DRY RUN] setParent ${issueId} → ${parentId}`);
+    console.log(`[DRY RUN] setParent ${issueId} -> ${parentId}`);
     return;
   }
   await linearQuery(`
@@ -147,7 +147,7 @@ export async function setParent(issueId, parentId, dryRun = false) {
 export async function addLabels(issueId, existingLabelIds, newLabelIds, dryRun = false) {
   const labelIds = [...new Set([...existingLabelIds, ...newLabelIds])];
   if (dryRun) {
-    console.log(`[DRY RUN] addLabels ${issueId} → ${labelIds}`);
+    console.log(`[DRY RUN] addLabels ${issueId} -> ${labelIds}`);
     return;
   }
   await linearQuery(`

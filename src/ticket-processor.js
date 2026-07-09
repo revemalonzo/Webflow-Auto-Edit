@@ -1,12 +1,12 @@
 /**
- * Core orchestration — processes a single ticket end-to-end.
+ * Core orchestration -- processes a single ticket end-to-end.
  *
  * Steps mirror SKILL.md:
- *   Step 2  — extract fields, BugHerd fallback
- *   Step 2b — pre-flight skip checks
- *   Router  — CMS or static path
- *   Step 5/5b/6 — update
- *   Step 8  — Linear update
+ *   Step 2  -- extract fields, BugHerd fallback
+ *   Step 2b -- pre-flight skip checks
+ *   Router  -- CMS or static path
+ *   Step 5/5b/6 -- update
+ *   Step 8  -- Linear update
  */
 
 import { getTaskDetails } from './bugherd-client.js';
@@ -21,11 +21,14 @@ const DRY_RUN = process.env.DRY_RUN === 'true';
 
 /**
  * Extract structured fields from a Linear ticket's description (markdown).
- * Fields are formatted as **Field Name**: value
+ * Fields are formatted as: **Field Name**: value (possibly multi-line until next **Field**)
  */
 function extractTicketFields(description = '') {
   const get = (label) => {
-    const re = new RegExp(`\\*\\*${label}\\*\\*[:\\s]+(.+?)(?=\\n\\*\\*|$)`, 'si');
+    const re = new RegExp(
+      `\\*\\*${label}\\*\\*[:\\s]+(.*?)(?=\\n\\*\\*[^*]+\\*\\*[:\\s]|$)`,
+      'si'
+    );
     const m = description.match(re);
     return m ? m[1].trim() : null;
   };
@@ -46,14 +49,15 @@ function extractTicketFields(description = '') {
 /**
  * Process one ticket.
  *
- * @param {object} ticket       - Linear issue object
+ * @param {object} ticket          - Linear issue object
  * @param {string} siteId
- * @param {string} wfToken      - Webflow token that can access the site
+ * @param {string} wfToken         - Webflow token that can access the site
+ * @param {string} wfShortName     - webflow.io subdomain (for staging URLs)
  * @param {Map}    collectionsCache
  * @param {Map}    pagesCache
  * @returns {{ outcome: 'updated'|'skipped'|'error', ticket, details }}
  */
-export async function processTicket(ticket, siteId, wfToken, collectionsCache, pagesCache) {
+export async function processTicket(ticket, siteId, wfToken, wfShortName, collectionsCache, pagesCache) {
   const existingLabelIds = ticket.labels?.nodes?.map((l) => l.id) ?? [];
   let fields = extractTicketFields(ticket.description);
 
@@ -67,10 +71,10 @@ export async function processTicket(ticket, siteId, wfToken, collectionsCache, p
 
   // Bail if still missing critical data
   if (!fields.pageUrl) {
-    return await skip(ticket, existingLabelIds, `⚠️ Automation skipped — no Page URL found on ticket even after BugHerd fallback.`);
+    return await skip(ticket, existingLabelIds, `Warning: Automation skipped -- no Page URL found on ticket even after BugHerd fallback.`);
   }
   if (!fields.newValue) {
-    return await skip(ticket, existingLabelIds, `⚠️ Automation skipped — no new value found on ticket.`);
+    return await skip(ticket, existingLabelIds, `Warning: Automation skipped -- no new value found on ticket.`);
   }
 
   // Pre-flight skip checks
@@ -86,7 +90,7 @@ export async function processTicket(ticket, siteId, wfToken, collectionsCache, p
   // Static FAQ heading check
   const staticSkip = isStaticSkip(fields.selector ?? '', fields.htmlSnapshot ?? '');
   if (staticSkip) {
-    return await skip(ticket, existingLabelIds, `⚠️ Automation skipped — ${staticSkip}`);
+    return await skip(ticket, existingLabelIds, `Warning: Automation skipped -- ${staticSkip}`);
   }
 
   // Route the ticket
@@ -123,22 +127,22 @@ export async function processTicket(ticket, siteId, wfToken, collectionsCache, p
     return await skip(ticket, existingLabelIds, updateResult.error);
   }
 
-  // Update succeeded — build comment and pass to QA
+  // Update succeeded -- build comment and pass to QA
   const method = route.path === 'cms' ? 'CMS update' : 'Designer element update';
   const location = route.path === 'cms'
-    ? `Collection → Field: ${route.collection} → ${updateResult.fieldSlug}\nItem: ${updateResult.itemName}`
-    : `Page → Element: ${route.urlPath} → ${updateResult.elementId}`;
+    ? `Collection -> Field: ${route.collection} -> ${updateResult.fieldSlug}\nItem: ${updateResult.itemName}`
+    : `Page -> Element: ${route.urlPath} -> ${updateResult.elementId}`;
 
-  const shortName = new URL(fields.pageUrl).hostname.replace('.webflow.io', '');
+  // wfShortName is the webflow.io subdomain, always correct for staging URL
   const comment = [
-    '✅ **Automated Update Applied**',
-    `**Method:** ${method}`,
+    'Automated Update Applied',
+    `Method: ${method}`,
     location,
-    `**Old value:** ${updateResult.oldValue ?? '(unknown)'}`,
-    `**New value:** ${fields.newValue}`,
-    `**Staging URL:** https://${shortName}.webflow.io${route.urlPath}`,
-    `**Published to:** Staging (webflow.io subdomain only)`,
-    `**Applied at:** ${new Date().toISOString()}`,
+    `Old value: ${updateResult.oldValue ?? '(unknown)'}`,
+    `New value: ${fields.newValue}`,
+    `Staging URL: https://${wfShortName}.webflow.io${route.urlPath}`,
+    `Published to: Staging (webflow.io subdomain only)`,
+    `Applied at: ${new Date().toISOString()}`,
     '',
     'Please verify on staging before publishing to live.',
   ].join('\n');

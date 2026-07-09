@@ -3,7 +3,9 @@
  * Logic ported directly from SKILL.md Step 2 / Step 4.
  */
 
-import urlRoutes from '../knowledge-base/url-routes.json' assert { type: 'json' };
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const urlRoutes = require('../knowledge-base/url-routes.json');
 
 /**
  * Determine routing path and collection for a ticket.
@@ -28,7 +30,7 @@ export function routeTicket(pageUrl, selector) {
     return { path: 'cms', collection, urlPath };
   }
 
-  // No CMS match — static path
+  // No CMS match -- static path
   return { path: 'static', collection: null, urlPath };
 }
 
@@ -64,7 +66,7 @@ function resolveCollectionFromUrl(urlPath, selector) {
 
 /**
  * Extract the slug from a URL path given a prefix.
- * e.g. "/programs/yoga-flow" → "yoga-flow"
+ * e.g. "/programs/yoga-flow" => "yoga-flow"
  */
 export function extractSlug(urlPath, prefix) {
   if (!urlPath.startsWith(prefix)) return null;

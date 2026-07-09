@@ -1,5 +1,5 @@
 /**
- * Entry point — mirrors SKILL.md run flow exactly.
+ * Entry point -- mirrors SKILL.md run flow exactly.
  *
  * Usage:
  *   node src/index.js                          # normal polling run
@@ -17,6 +17,7 @@ import { pollTickets, getIssue, listSubissues, postComment, applySkipTreatment }
 import { resolveSite, publishToStaging } from './webflow-client.js';
 import { processTicket } from './ticket-processor.js';
 import { runGroupingStep } from './grouping.js';
+import { detectLocationsConflicts } from './conflicts.js';
 
 const require = createRequire(import.meta.url);
 const knownIds = require('../knowledge-base/known-ids.json');
@@ -28,7 +29,7 @@ const BATCH_URL = process.env.BATCH_URL ?? null;
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PROGRESS_FILE = path.join(__dirname, '..', 'progress', 'run-progress.json');
 
-// ─── Progress file helpers ────────────────────────────────────────────────────
+// --- Progress file helpers ---
 
 function readProgress() {
   try {
@@ -46,10 +47,10 @@ function writeProgress(data) {
   fs.writeFileSync(PROGRESS_FILE, JSON.stringify(data, null, 2));
 }
 
-// ─── Batch detection helpers ──────────────────────────────────────────────────
+// --- Batch detection helpers ---
 
 function pickBatch(tickets) {
-  // Group by parent ID — pick oldest parent group
+  // Group by parent ID -- pick oldest parent group
   const byParent = new Map();
   const solo = [];
 
@@ -59,7 +60,6 @@ function pickBatch(tickets) {
       if (!byParent.has(pid)) byParent.set(pid, []);
       byParent.get(pid).push(t);
     } else if (t.children?.nodes?.length > 0) {
-      // This ticket IS a parent
       const pid = t.id;
       if (!byParent.has(pid)) byParent.set(pid, [t]);
       else byParent.get(pid).unshift(t);
@@ -69,7 +69,6 @@ function pickBatch(tickets) {
   }
 
   if (byParent.size > 0) {
-    // Pick oldest-parent group
     let oldestParentTime = Infinity;
     let chosen = null;
     for (const [, group] of byParent) {
@@ -101,24 +100,43 @@ function pickBatch(tickets) {
   return { batch: solo.slice(0, 5), type: 'newEdit' };
 }
 
-// ─── Main ─────────────────────────────────────────────────────────────────────
+/**
+ * Parse the hostname from a page URL and determine whether it is a
+ * webflow.io subdomain or a custom domain.
+ *
+ * Returns { shortName, customDomain } where exactly one is non-null:
+ *   shortName    - webflow.io subdomain (e.g. "my-gym") if URL is *.webflow.io
+ *   customDomain - bare hostname without www. (e.g. "mygym.com") if custom domain
+ */
+function parseSiteFromUrl(pageUrl) {
+  const hostname = new URL(pageUrl).hostname;
+  if (hostname.endsWith('.webflow.io')) {
+    // Strip subdomain prefix only (handles "my-gym.webflow.io" correctly)
+    const shortName = hostname.replace(/\.webflow\.io$/, '').split('.')[0];
+    return { shortName, customDomain: null };
+  }
+  // Custom domain: strip www. for normalization
+  const customDomain = hostname.replace(/^www\./i, '');
+  return { shortName: null, customDomain };
+}
+
+// --- Main ---
 
 async function main() {
   console.log(`[${new Date().toISOString()}] webflow-text-updater starting${DRY_RUN ? ' (DRY RUN)' : ''}`);
 
-  // ── Recovery check ──────────────────────────────────────────────────────────
+  // -- Recovery check --
   const resumeData = readProgress();
   if (resumeData) {
     console.log(`Resuming mid-run from progress file. Already processed: ${resumeData.processed?.join(', ')}`);
   }
 
-  // ── Step 1: Build work set ──────────────────────────────────────────────────
+  // -- Step 1: Build work set --
   let workSet = [];
   let batchType = 'newEdit';
   let parentTicket = null;
 
   if (BATCH_URL) {
-    // Manual override
     const identifier = BATCH_URL.match(/\/([A-Z]+-\d+)/)?.[1];
     if (!identifier) throw new Error(`Could not extract issue ID from BATCH_URL: ${BATCH_URL}`);
 
@@ -137,16 +155,13 @@ async function main() {
       batchType = 'newEdit';
     }
 
-    // Relaxed filter: only exclude ai:edited
     workSet = workSet.filter((t) => !t.labels?.nodes?.some((l) => l.id === labels.aiEdited));
   } else if (resumeData) {
-    // Resuming — reconstruct work set from progress file
     workSet = await Promise.all(resumeData.workSet.map((id) => getIssue(id)));
     workSet = workSet.filter(Boolean);
     batchType = resumeData.batchType ?? 'newEdit';
     if (resumeData.parentId) parentTicket = await getIssue(resumeData.parentId);
   } else {
-    // Normal run: poll all 6 state+label combos in parallel
     const pollCombos = [
       { stateId: states.liveEditsQueue,    labelId: labels.aiAvailable  },
       { stateId: states.notLiveEditsQueue, labelId: labels.aiAvailable  },
@@ -159,7 +174,6 @@ async function main() {
     const polls = await Promise.all(pollCombos.map((c) => pollTickets(c)));
     const all = polls.flat();
 
-    // Deduplicate and filter out ai:edited
     const seen = new Set();
     const eligible = all.filter((t) => {
       if (seen.has(t.id)) return false;
@@ -172,7 +186,6 @@ async function main() {
       return;
     }
 
-    // Priority: Live/Not Live Queue batches first, then New Edit
     const queueTickets = eligible.filter(
       (t) => t.state.id === states.liveEditsQueue || t.state.id === states.notLiveEditsQueue
     );
@@ -182,7 +195,6 @@ async function main() {
       const { batch } = pickBatch(queueTickets);
       workSet = batch;
       batchType = 'queue';
-      // Find parent if any ticket has a parent reference
       const withParent = workSet.find((t) => t.parent?.id);
       if (withParent) parentTicket = await getIssue(withParent.parent.id);
     } else {
@@ -199,8 +211,8 @@ async function main() {
 
   console.log(`Work set: [${batchType}] ${workSet.map((t) => t.identifier).join(', ')}`);
 
-  // ── Step 1.5: Resolve Webflow site ─────────────────────────────────────────
-  // Use first ticket with a Page URL
+  // -- Step 1.5: Resolve Webflow site --
+  // Use the first ticket that has a Page URL for site detection
   const sampleTicket = workSet.find((t) => t.description?.includes('**Page URL**')) ?? workSet[0];
   const pageUrlMatch = sampleTicket.description?.match(/\*\*Page URL\*\*[:\s]+(\S+)/i);
 
@@ -210,26 +222,27 @@ async function main() {
   }
 
   const pageUrl = pageUrlMatch[1];
-  let hostname;
+  let parsedSite;
   try {
-    hostname = new URL(pageUrl).hostname;
+    parsedSite = parseSiteFromUrl(pageUrl);
   } catch {
     console.error(`Invalid Page URL: ${pageUrl}`);
     return;
   }
 
-  const shortName = hostname.replace('.webflow.io', '').split('.')[0];
+  const { shortName: parsedShortName, customDomain } = parsedSite;
+  const siteLabel = customDomain ?? parsedShortName; // for log messages
 
   let siteInfo;
   try {
-    siteInfo = await resolveSite(shortName);
+    siteInfo = await resolveSite(parsedShortName, customDomain);
   } catch (err) {
     const blockedMsg = [
-      '⚠️ Blocked — Inaccessible Workspace',
-      `The Page URL is \`${pageUrl}\`. Site \`${shortName}\` not found in any connected Webflow workspace.`,
+      'Blocked -- Inaccessible Workspace',
+      `The Page URL is ${pageUrl}. Site "${siteLabel}" not found in any connected Webflow workspace.`,
       'Pending change: see ticket description.',
       '',
-      'Labels `ai:available` and `ai:text-change` have been removed. This ticket requires manual action or workspace reconnection.',
+      'Labels ai:available and ai:text-change have been removed. This ticket requires manual action or workspace reconnection.',
     ].join('\n');
     for (const t of workSet) {
       const existingLabelIds = t.labels?.nodes?.map((l) => l.id) ?? [];
@@ -240,7 +253,9 @@ async function main() {
     return;
   }
 
-  console.log(`Site: ${shortName} → ${siteInfo.siteId} (token #${siteInfo.tokenIndex})`);
+  // siteInfo.shortName is ALWAYS the webflow.io subdomain -- use it for staging URLs
+  const { shortName } = siteInfo;
+  console.log(`Site: ${siteLabel} -> ${siteInfo.siteId} (shortName: ${shortName}, token #${siteInfo.tokenIndex})`);
 
   // Write initial progress file
   const progress = {
@@ -256,12 +271,36 @@ async function main() {
   };
   writeProgress(progress);
 
-  // ── Steps 5–8: Process tickets ─────────────────────────────────────────────
+  // -- Pre-flight: Shared Locations item conflict detection --
+  const locationsConflicts = detectLocationsConflicts(workSet);
+  if (locationsConflicts.size > 0) {
+    console.log(`Locations conflicts detected for ${locationsConflicts.size} ticket(s) -- skipping all.`);
+    const conflictMsg = 'Warning: Automation skipped -- architectural conflict. The Locations item is shared across all program pages. Setting this field to a program-specific value would overwrite it for every other program. Needs manual review.';
+    for (const ticket of workSet) {
+      if (locationsConflicts.has(ticket.id)) {
+        const existingLabelIds = ticket.labels?.nodes?.map((l) => l.id) ?? [];
+        await postComment(ticket.id, conflictMsg, DRY_RUN);
+        await applySkipTreatment(ticket.id, existingLabelIds, DRY_RUN);
+        progress.skipped.push(ticket.id);
+      }
+    }
+    writeProgress(progress);
+    // Remove conflicting tickets from the work set
+    workSet = workSet.filter((t) => !locationsConflicts.has(t.id));
+  }
+
+  if (workSet.length === 0) {
+    console.log('All tickets in work set were Locations conflicts. Exiting.');
+    progress.runComplete = true;
+    writeProgress(progress);
+    return;
+  }
+
+  // -- Steps 5-8: Process tickets --
   const collectionsCache = new Map();
   const pagesCache = new Map();
   const results = [];
 
-  // Skip already-processed tickets on resume
   const alreadyDone = new Set(resumeData?.processed ?? []);
 
   for (const ticket of workSet) {
@@ -273,15 +312,15 @@ async function main() {
     console.log(`Processing ${ticket.identifier}...`);
     try {
       const result = await processTicket(
-        ticket, siteInfo.siteId, siteInfo.token, collectionsCache, pagesCache
+        ticket, siteInfo.siteId, siteInfo.token, shortName, collectionsCache, pagesCache
       );
       results.push(result);
-      console.log(`  → ${result.outcome}${result.reason ? ': ' + result.reason.slice(0, 80) : ''}`);
+      console.log(`  -> ${result.outcome}${result.reason ? ': ' + result.reason.slice(0, 80) : ''}`);
 
       if (result.outcome === 'updated') progress.processed.push(ticket.id);
       else progress.skipped.push(ticket.id);
     } catch (err) {
-      console.error(`  ✗ ${ticket.identifier}: ${err.message}`);
+      console.error(`  x ${ticket.identifier}: ${err.message}`);
       results.push({ outcome: 'error', ticket, reason: err.message });
       progress.errors.push({ id: ticket.id, error: err.message });
     }
@@ -289,21 +328,21 @@ async function main() {
     writeProgress(progress);
   }
 
-  // ── Step 7: Publish to staging once ────────────────────────────────────────
+  // -- Step 7: Publish to staging once --
   const anyUpdated = results.some((r) => r.outcome === 'updated');
   if (anyUpdated) {
     console.log(`Publishing ${shortName} to staging...`);
     await publishToStaging(siteInfo.siteId, siteInfo.token, DRY_RUN);
-    console.log('  ✓ Published to staging');
+    console.log('  Published to staging');
   }
 
-  // ── Step 9: Grouping / deconsolidation ─────────────────────────────────────
+  // -- Step 9: Grouping / deconsolidation --
   console.log('Running Step 9 (grouping/deconsolidation)...');
   await runGroupingStep(results, parentTicket, batchType);
   progress.step9Done = true;
   writeProgress(progress);
 
-  // ── Step 10: Final report ───────────────────────────────────────────────────
+  // -- Step 10: Final report --
   const updated = results.filter((r) => r.outcome === 'updated').length;
   const skipped = results.filter((r) => r.outcome === 'skipped').length;
   const errors  = results.filter((r) => r.outcome === 'error').length;

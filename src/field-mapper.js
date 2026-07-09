@@ -4,7 +4,9 @@
  * without needing to call get_collection_details.
  */
 
-import fieldMappings from '../knowledge-base/field-mappings.json' assert { type: 'json' };
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const fieldMappings = require('../knowledge-base/field-mappings.json');
 
 /**
  * Look up a known field slug for a given collection + selector.
@@ -36,7 +38,7 @@ export function lookupFieldSlug(collection, selector, elementId = null) {
     }
   }
 
-  return null; // not in knowledge base — caller must use get_collection_details
+  return null; // not in knowledge base -- caller must use get_collection_details
 }
 
 /**
@@ -50,7 +52,7 @@ export function isStaticSkip(selector, htmlSnapshot) {
     htmlSnapshot &&
     htmlSnapshot.includes('Questions? We have the answers!')
   ) {
-    return 'Static FAQ heading is hardcoded — not editable via API.';
+    return 'Static FAQ heading is hardcoded -- not editable via API.';
   }
   return null;
 }

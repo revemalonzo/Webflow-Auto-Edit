@@ -42,30 +42,69 @@ async function wfFetch(token, path, options = {}) {
 }
 
 /**
- * Find the site and working token for a given shortName.
- * Returns { siteId, token, tokenIndex } or throws if not found.
+ * Normalize a domain string: strip www. prefix and lowercase.
+ * e.g. "www.MyGym.com" => "mygym.com"
  */
-export async function resolveSite(shortName) {
+function normalizeDomain(d) {
+  return d?.replace(/^www\./i, '').toLowerCase() ?? '';
+}
+
+/**
+ * Find the site and working token for a given shortName or customDomain.
+ *
+ * Pass exactly one of:
+ *   shortName   - the webflow.io subdomain (e.g. "my-gym")
+ *   customDomain - a custom domain WITHOUT www. prefix (e.g. "mygym.com")
+ *
+ * Always returns { siteId, token, tokenIndex, shortName } where shortName
+ * is the webflow.io subdomain — use this for staging URLs regardless of
+ * whether the ticket URL was a custom domain.
+ *
+ * Throws if not found in any workspace or if site is in a disqualified folder.
+ */
+export async function resolveSite(shortName, customDomain = null) {
+  const normalizedCustom = customDomain ? normalizeDomain(customDomain) : null;
+
   for (let i = 0; i < TOKENS.length; i++) {
     const token = TOKENS[i];
     try {
       const data = await wfFetch(token, '/sites');
       const sites = data.sites ?? data;
-      const match = sites.find((s) => s.shortName === shortName);
+
+      let match;
+      if (normalizedCustom) {
+        // Custom domain: check each site's customDomains list
+        match = sites.find((s) =>
+          s.customDomains?.some((d) => normalizeDomain(d.url) === normalizedCustom)
+        );
+      } else {
+        // Standard webflow.io subdomain: exact match only (no fuzzy matching)
+        match = sites.find((s) => s.shortName === shortName);
+      }
+
       if (!match) continue;
+
       if (DISQUALIFIED_FOLDERS.includes(match.parentFolderId)) {
         throw new Error(
-          `Site "${shortName}" is in a disqualified folder and cannot be processed automatically.`
+          `Site "${match.shortName}" is in a disqualified folder and cannot be processed automatically.`
         );
       }
-      return { siteId: match.id, token, tokenIndex: i + 1 };
+
+      return {
+        siteId: match.id,
+        token,
+        tokenIndex: i + 1,
+        shortName: match.shortName, // always the webflow.io subdomain
+      };
     } catch (err) {
       if (err.status === 401 || err.status === 403) continue; // wrong workspace token
       throw err;
     }
   }
+
+  const identifier = normalizedCustom ?? shortName;
   throw new Error(
-    `Site "${shortName}" not found in any connected Webflow workspace (tried ${TOKENS.length} token(s)).`
+    `Site "${identifier}" not found in any connected Webflow workspace (tried ${TOKENS.length} token(s)).`
   );
 }
 
@@ -83,16 +122,22 @@ export async function listCollectionItems(collectionId, token, { slug } = {}) {
   return data.items ?? data;
 }
 
-/** Update a single CMS item field. */
+/** Update a single CMS item field. Webflow v2 wraps fields under fieldData. */
 export async function updateCollectionItem(collectionId, itemId, fields, token, dryRun = false) {
   if (dryRun) {
     console.log(`[DRY RUN] Would PATCH /collections/${collectionId}/items/${itemId}`, fields);
-    return { id: itemId, ...fields };
+    return { id: itemId, fieldData: fields };
   }
   return wfFetch(token, `/collections/${collectionId}/items/${itemId}`, {
     method: 'PATCH',
-    body: JSON.stringify({ fields }),
+    body: JSON.stringify({ fieldData: fields }),
   });
+}
+
+/** Get field definitions for a collection -- used when field slug is not in KB. */
+export async function getCollectionFields(collectionId, token) {
+  const data = await wfFetch(token, `/collections/${collectionId}`);
+  return data.fields ?? data.collection?.fields ?? [];
 }
 
 /** Publish a site to its webflow.io staging subdomain only. */
@@ -110,7 +155,7 @@ export async function publishToStaging(siteId, token, dryRun = false) {
   });
 }
 
-// ─── Data API — static elements ───────────────────────────────────────────────
+// --- Data API -- static elements ---
 
 /** List pages for a site. */
 export async function listPages(siteId, token) {
@@ -118,33 +163,44 @@ export async function listPages(siteId, token) {
   return data.pages ?? data;
 }
 
-/** Query elements on a page. */
+/**
+ * Query elements on a page.
+ * Webflow Data API: GET /v2/pages/{pageId}/dom/nodes
+ */
 export async function queryElements(siteId, pageId, token, { text, cssClass, type, scopeComponentId } = {}) {
-  const params = new URLSearchParams({ siteId, pageId });
+  const params = new URLSearchParams();
   if (text) params.set('text', text);
   if (cssClass) params.set('cssClass', cssClass);
   if (type) params.set('type', type);
   if (scopeComponentId) params.set('scopeComponentId', scopeComponentId);
 
-  return wfFetch(token, `/pages/${pageId}/elements?${params}`);
+  const qs = params.toString() ? `?${params}` : '';
+  return wfFetch(token, `/pages/${pageId}/dom/nodes${qs}`);
 }
 
-/** Get all elements in a component definition. */
+/**
+ * Get all elements inside a component definition.
+ * Webflow Data API: GET /v2/components/{componentId}/dom/nodes
+ */
 export async function getAllComponentElements(componentId, token) {
-  return wfFetch(token, `/components/${componentId}/elements`);
+  return wfFetch(token, `/components/${componentId}/dom/nodes`);
 }
 
-/** Set text on a static element. */
+/**
+ * Set text on a static DOM node.
+ * Webflow Data API: POST /v2/pages/{pageId}/dom
+ */
 export async function setElementText(pageId, elementId, text, token, { scopeComponentId } = {}, dryRun = false) {
   if (dryRun) {
-    console.log(`[DRY RUN] Would set text on element ${elementId} → "${text}"`);
+    console.log(`[DRY RUN] Would set text on element ${elementId} -> "${text}"`);
     return;
   }
-  const body = { text };
-  if (scopeComponentId) body.scopeComponentId = scopeComponentId;
 
-  return wfFetch(token, `/pages/${pageId}/elements/${elementId}`, {
-    method: 'PATCH',
-    body: JSON.stringify(body),
+  const node = { nodeId: elementId, text };
+  if (scopeComponentId) node.scopeComponentId = scopeComponentId;
+
+  return wfFetch(token, `/pages/${pageId}/dom`, {
+    method: 'POST',
+    body: JSON.stringify({ nodes: [node] }),
   });
 }
