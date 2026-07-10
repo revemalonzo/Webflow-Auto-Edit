@@ -1,0 +1,221 @@
+{
+  "_comment": "Maps siteId + page URL + CSS selector to Webflow static Designer element IDs. Auto-learned after component-scan/AI resolution and cached here. Element IDs are Webflow-internal GUIDs unique per site -- siteId is a required part of the key (see learnElementMapping/lookupElementId comments). Reset on 2026-07-10: prior entries predated site-scoping and could not be safely attributed to a site in retrospect -- confirmed at least one live cross-site collision (a Rookies Kids Fitness ticket matched a cached element ID that only existed on an earlier, different site).",
+  "mappings": [
+    {
+      "siteId": "6969486bef38225922e17978",
+      "urlPath": "/",
+      "cssClass": ".heading-10",
+      "elementId": "cdfbc42a-5b8c-37be-e97f-16d5c58af23b",
+      "scopeComponentId": null,
+      "_learnedAt": "2026-07-09T23:37:35.327Z"
+    },
+    {
+      "siteId": "6a1d7e6701ef1f2aab95c816",
+      "urlPath": "/contact",
+      "cssClass": ".text-link",
+      "elementId": "83e346d3-e252-53e7-362a-380f49f50a40",
+      "scopeComponentId": "c90329bc-cc1d-8a15-6ecb-17fb22e37953",
+      "_learnedAt": "2026-07-09T23:39:07.462Z"
+    },
+    {
+      "siteId": "6a1d7e6701ef1f2aab95c816",
+      "urlPath": "/about",
+      "cssClass": ".c-large",
+      "elementId": "588daf40-2b6a-1b79-2348-ab1045d536d0",
+      "scopeComponentId": null,
+      "_learnedAt": "2026-07-09T23:39:21.741Z"
+    },
+    {
+      "siteId": "6a1d7e6701ef1f2aab95c816",
+      "urlPath": "/programs/drop-in",
+      "cssClass": ".h2-section",
+      "elementId": "645fe62b-e028-9948-2d09-d67b6827f358",
+      "scopeComponentId": null,
+      "_learnedAt": "2026-07-09T23:39:41.923Z"
+    },
+    {
+      "siteId": "6a1d7e6701ef1f2aab95c816",
+      "urlPath": "/programs/guided-training",
+      "cssClass": ".h2-section",
+      "elementId": "645fe62b-e028-9948-2d09-d67b6827f358",
+      "scopeComponentId": null,
+      "_learnedAt": "2026-07-09T23:39:45.810Z"
+    },
+    {
+      "siteId": "6a1d7e6701ef1f2aab95c816",
+      "urlPath": "/",
+      "cssClass": ".h2-section",
+      "elementId": "16f00ba0-5427-a888-a26d-f2d8117a1d96",
+      "scopeComponentId": "16f00ba0-5427-a888-a26d-f2d8117a1d92",
+      "_learnedAt": "2026-07-09T23:40:02.031Z"
+    },
+    {
+      "siteId": "6a1d7e6701ef1f2aab95c816",
+      "urlPath": "/",
+      "cssClass": ".fc-white",
+      "elementId": "8eeb5ba8-fc64-ee55-d535-5123c93c1eff",
+      "scopeComponentId": "8eeb5ba8-fc64-ee55-d535-5123c93c1ef6",
+      "_learnedAt": "2026-07-09T23:40:11.063Z"
+    },
+    {
+      "siteId": "6a037f56eb22d19bfee782ca",
+      "urlPath": "/programs/drop-in",
+      "cssClass": ".dropdown-heading",
+      "elementId": "645fe62b-e028-9948-2d09-d67b6827f35d",
+      "scopeComponentId": null,
+      "_learnedAt": "2026-07-09T23:41:21.644Z"
+    },
+    {
+      "siteId": "6a037f56eb22d19bfee782ca",
+      "urlPath": "/programs/nutrition-coaching",
+      "cssClass": ".dropdown-heading",
+      "elementId": "645fe62b-e028-9948-2d09-d67b6827f35d",
+      "scopeComponentId": null,
+      "_learnedAt": "2026-07-09T23:41:26.068Z"
+    },
+    {
+      "siteId": "6a037f56eb22d19bfee782ca",
+      "urlPath": "/programs/small-group-training",
+      "cssClass": ".dropdown-heading",
+      "elementId": "645fe62b-e028-9948-2d09-d67b6827f35d",
+      "scopeComponentId": null,
+      "_learnedAt": "2026-07-09T23:41:42.350Z"
+    },
+    {
+      "siteId": "6a037f56eb22d19bfee782ca",
+      "urlPath": "/programs/personal-training",
+      "cssClass": ".dropdown-heading",
+      "elementId": "645fe62b-e028-9948-2d09-d67b6827f35d",
+      "scopeComponentId": null,
+      "_learnedAt": "2026-07-09T23:41:45.698Z"
+    },
+    {
+      "siteId": "6a037f56eb22d19bfee782ca",
+      "urlPath": "/programs/group-training",
+      "cssClass": ".dropdown-heading",
+      "elementId": "645fe62b-e028-9948-2d09-d67b6827f35d",
+      "scopeComponentId": null,
+      "_learnedAt": "2026-07-09T23:41:58.997Z"
+    },
+    {
+      "siteId": "6a037f56eb22d19bfee782ca",
+      "urlPath": "/programs/hyrox",
+      "cssClass": ".dropdown-heading",
+      "elementId": "645fe62b-e028-9948-2d09-d67b6827f35d",
+      "scopeComponentId": null,
+      "_learnedAt": "2026-07-09T23:42:04.281Z"
+    },
+    {
+      "siteId": "6a1d7e6701ef1f2aab95c816",
+      "urlPath": "/programs/nutrition-coaching",
+      "cssClass": ".h2-section",
+      "elementId": "645fe62b-e028-9948-2d09-d67b6827f358",
+      "scopeComponentId": null,
+      "_learnedAt": "2026-07-09T23:46:56.617Z"
+    },
+    {
+      "siteId": "64df7a943e7285560d8b1be7",
+      "urlPath": "/challenges-and-events",
+      "cssClass": ".w-dyn-item",
+      "elementId": "655ae199-0ef0-8ea2-8167-53acedd5cff0",
+      "scopeComponentId": null,
+      "_learnedAt": "2026-07-09T23:50:00.217Z"
+    },
+    {
+      "siteId": "62bef57d4af2c40d3b4c05c8",
+      "urlPath": "/",
+      "cssClass": ".w-nav-link",
+      "elementId": "dd6a6fa0-fe6d-151c-b5ed-122550bd9051",
+      "scopeComponentId": "0da1171f-ad0c-46b0-f8b9-22b81dbab2d1",
+      "_learnedAt": "2026-07-10T03:54:40.782Z"
+    },
+    {
+      "siteId": "684876b9f3262fc7123d2544",
+      "urlPath": "/membership-pricing-request",
+      "cssClass": ".secondary-section-pricing",
+      "elementId": "7039ab67-9e36-28ad-74a4-3ec3541badfa",
+      "scopeComponentId": null,
+      "_learnedAt": "2026-07-10T03:55:19.675Z"
+    },
+    {
+      "siteId": "66a001859a98895f4bcb62c0",
+      "urlPath": "/",
+      "cssClass": ".heading-8---black",
+      "elementId": "507198c5-0938-d4d8-946a-c6df0a6daab3",
+      "scopeComponentId": "9ddaec18-3124-52e0-730a-feaa9eef3fc6",
+      "_learnedAt": "2026-07-10T04:05:52.928Z"
+    },
+    {
+      "siteId": "699dbaf7b474621f9f52e9c6",
+      "urlPath": "/contact",
+      "cssClass": ".contact-detail-subcontainer-two",
+      "elementId": "cda4a93c-b607-2633-17c2-34f1f0a290aa",
+      "scopeComponentId": null,
+      "_learnedAt": "2026-07-10T04:40:41.613Z"
+    },
+    {
+      "siteId": "6880f04b8448f54e94bac2f6",
+      "urlPath": "/contact-crossfit-kohen-in-corpus-christi-tx",
+      "cssClass": ".ad-banner-bg",
+      "elementId": "42c2a414-309d-e3ee-374a-9c7e69d869bb",
+      "scopeComponentId": null,
+      "_learnedAt": "2026-07-10T05:16:26.500Z"
+    },
+    {
+      "siteId": "6a19bbf60a193154fbf74c89",
+      "urlPath": "/",
+      "cssClass": ".fc-white",
+      "elementId": "8eeb5ba8-fc64-ee55-d535-5123c93c1eff",
+      "scopeComponentId": "8eeb5ba8-fc64-ee55-d535-5123c93c1ef6",
+      "_learnedAt": "2026-07-10T05:18:21.149Z"
+    },
+    {
+      "siteId": "6a19bbf60a193154fbf74c89",
+      "urlPath": "/",
+      "cssClass": ".fc-white",
+      "elementId": "428a9ae7-0142-4a9c-862b-33bf48e3148f",
+      "scopeComponentId": "428a9ae7-0142-4a9c-862b-33bf48e31487",
+      "_learnedAt": "2026-07-10T05:20:20.081Z"
+    },
+    {
+      "siteId": "6a19bbf60a193154fbf74c89",
+      "urlPath": "/",
+      "cssClass": ".h2-left",
+      "elementId": "428a9ae7-0142-4a9c-862b-33bf48e3148c",
+      "scopeComponentId": "428a9ae7-0142-4a9c-862b-33bf48e31487",
+      "_learnedAt": "2026-07-10T05:20:28.362Z"
+    },
+    {
+      "siteId": "6a19bbf60a193154fbf74c89",
+      "urlPath": "/contact",
+      "cssClass": ".hs-24",
+      "elementId": "a65270a4-6914-3941-64af-c0e997b73bd8",
+      "scopeComponentId": null,
+      "_learnedAt": "2026-07-10T08:05:29.028Z"
+    },
+    {
+      "siteId": "6a19bbf60a193154fbf74c89",
+      "urlPath": "/contact",
+      "cssClass": ".padding-20px",
+      "elementId": "42c2a414-309d-e3ee-374a-9c7e69d869be",
+      "scopeComponentId": null,
+      "_learnedAt": "2026-07-10T08:05:34.442Z"
+    },
+    {
+      "siteId": "6a037f56eb22d19bfee782ca",
+      "urlPath": "/",
+      "cssClass": ".fc-white",
+      "elementId": "8eeb5ba8-fc64-ee55-d535-5123c93c1eff",
+      "scopeComponentId": "8eeb5ba8-fc64-ee55-d535-5123c93c1ef6",
+      "_learnedAt": "2026-07-10T08:32:28.008Z"
+    },
+    {
+      "siteId": "6a0bbdb0fefdeab2dad19474",
+      "urlPath": "/about",
+      "cssClass": ".fc-black",
+      "elementId": "588daf40-2b6a-1b79-2348-ab1045d536d0",
+      "scopeComponentId": null,
+      "_learnedAt": "2026-07-10T09:16:42.806Z"
+    }
+  ]
+}

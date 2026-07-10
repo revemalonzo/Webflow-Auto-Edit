@@ -1,0 +1,20 @@
+{
+  "_comment": "Cloudinary crop/gravity table per image type. Deviates from the original spec in two ways, based on confirmed root causes: (1) gravity uses g_face:center or g_auto:subject instead of bare g_face -- bare g_face falls back to `north` (top-crop) when no face is detected, which is the confirmed cause of bad focal points; (2) dpr_auto is added to every non-original-size transform to fix blurriness on retina/high-DPI displays, since a single fixed-pixel asset is otherwise upscaled by the browser. A field's own helpText dimensions (if present) still take precedence over this table at runtime.",
+  "types": {
+    "programs-hero-desktop": { "width": 1440, "height": 720, "gravity": "auto:subject" },
+    "programs-hero-mobile": { "width": 480, "height": 720, "gravity": "auto:subject" },
+    "programs-home-portrait": { "width": 480, "height": 720, "gravity": "auto:subject" },
+    "programs-home-landscape": { "width": 750, "height": 575, "gravity": "auto:subject" },
+    "header-sections-desktop": { "width": 1440, "height": 720, "gravity": "auto:subject" },
+    "header-sections-mobile": { "width": 480, "height": 720, "gravity": "auto:subject" },
+    "coaches": { "width": 750, "height": 750, "gravity": "face:center" },
+    "chat-widget-logo": { "width": 300, "height": 300, "gravity": "face:center" },
+    "community": { "width": 300, "height": 300, "gravity": "auto:subject", "helpTextOverride": true },
+    "about": { "width": 510, "height": 700, "gravity": "auto:subject" },
+    "final-cta": { "width": 480, "height": 720, "gravity": "auto:subject" },
+    "amenities": { "width": 480, "height": 720, "gravity": "auto" },
+    "blog-thumbnail": { "width": 800, "height": 600, "gravity": "auto:subject", "helpTextOverride": true },
+    "blog-header": { "width": 1440, "height": 720, "gravity": "auto:subject" },
+    "blog-rich-text": { "width": null, "height": null, "gravity": null }
+  }
+}

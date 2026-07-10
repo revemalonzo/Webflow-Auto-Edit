@@ -61,6 +61,34 @@ function resolveCollectionFromUrl(urlPath, selector) {
     }
   }
 
+  // Generic fallback: every PushPress site template uses "Pages - Hero Sections"
+  // as a one-item-per-static-page collection (About, Contact, Schedule, Careers,
+  // Privacy Policy, etc. all live there, keyed by slug) -- confirmed identical
+  // across every site tested. A single-segment path that matched nothing above
+  // is very likely another page in that same collection. This is only a guess:
+  // resolveCmsTarget's slug lookup (Pattern A) verifies the item actually exists,
+  // and the ticket falls back to the static path cleanly if it doesn't.
+  const segments = urlPath.split('/').filter(Boolean);
+  if (segments.length === 1) {
+    return 'Pages - Hero Sections';
+  }
+
+  return null;
+}
+
+/**
+ * Resolve the primary collection for a URL path, ignoring selector overrides.
+ * Used when falling back from CMS to static — we need the page template's collection,
+ * not the nested collection referenced by the selector (e.g. FAQs inside Programs).
+ *
+ * @param {string} urlPath - e.g. "/programs/drop-in"
+ * @returns {string|null} collection name, e.g. "Programs"
+ */
+export function resolvePageTemplateCollection(urlPath) {
+  if (urlRoutes.exactRoutes[urlPath]) return urlRoutes.exactRoutes[urlPath];
+  for (const route of urlRoutes.prefixRoutes) {
+    if (urlPath.startsWith(route.prefix)) return route.collection;
+  }
   return null;
 }
 

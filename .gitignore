@@ -3,6 +3,10 @@
 .env.local
 .env.*.local
 
+# SKILL.md specs — historically contain embedded live API tokens/credentials
+SKILL.md
+*SKILL.md
+
 # Runtime state
 progress/
 *.progress.json

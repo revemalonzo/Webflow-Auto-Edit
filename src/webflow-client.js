@@ -19,7 +19,13 @@ const TOKENS = [
 
 const DISQUALIFIED_FOLDERS = ['67d8911fb1abf593c188531d'];
 
-async function wfFetch(token, path, options = {}) {
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// Confirmed real crash: a single 429 (rate limit) during a live 40-batch run took
+// down the entire process uncaught, mid-batch -- losing all remaining discovery
+// progress for that run. Retry transient failures (429, and 5xx which are usually
+// momentary) with backoff before giving up; anything else still throws immediately.
+async function wfFetch(token, path, options = {}, attempt = 1) {
   const url = `${WEBFLOW_BASE}${path}`;
   const res = await fetch(url, {
     ...options,
@@ -32,6 +38,16 @@ async function wfFetch(token, path, options = {}) {
   });
 
   if (!res.ok) {
+    const isTransient = res.status === 429 || res.status >= 500;
+    if (isTransient && attempt <= 4) {
+      const retryAfterHeader = Number(res.headers.get('retry-after'));
+      const delayMs = Number.isFinite(retryAfterHeader) && retryAfterHeader > 0
+        ? retryAfterHeader * 1000
+        : 1000 * 2 ** (attempt - 1); // 1s, 2s, 4s, 8s
+      console.warn(`  Webflow API ${res.status} on ${path} -- retrying in ${delayMs}ms (attempt ${attempt}/4)...`);
+      await sleep(delayMs);
+      return wfFetch(token, path, options, attempt + 1);
+    }
     const body = await res.text();
     const err = new Error(`Webflow API ${res.status}: ${body}`);
     err.status = res.status;
@@ -95,6 +111,7 @@ export async function resolveSite(shortName, customDomain = null) {
         token,
         tokenIndex: i + 1,
         shortName: match.shortName, // always the webflow.io subdomain
+        displayName: match.displayName ?? match.shortName, // human-readable site/gym name, e.g. for alt text
       };
     } catch (err) {
       if (err.status === 401 || err.status === 403) continue; // wrong workspace token
@@ -122,15 +139,20 @@ export async function listCollectionItems(collectionId, token, { slug } = {}) {
   return data.items ?? data;
 }
 
-/** Update a single CMS item field. Webflow v2 wraps fields under fieldData. */
-export async function updateCollectionItem(collectionId, itemId, fields, token, dryRun = false) {
+/**
+ * Update a single CMS item's fields. Webflow v2 wraps fields under fieldData;
+ * itemLevelFields (e.g. { isDraft: false }) are item-level properties and go
+ * alongside fieldData, not inside it.
+ */
+export async function updateCollectionItem(collectionId, itemId, fields, token, dryRun = false, itemLevelFields = {}) {
+  const body = { ...itemLevelFields, fieldData: fields };
   if (dryRun) {
-    console.log(`[DRY RUN] Would PATCH /collections/${collectionId}/items/${itemId}`, fields);
-    return { id: itemId, fieldData: fields };
+    console.log(`[DRY RUN] Would PATCH /collections/${collectionId}/items/${itemId}`, body);
+    return { id: itemId, ...itemLevelFields, fieldData: fields };
   }
   return wfFetch(token, `/collections/${collectionId}/items/${itemId}`, {
     method: 'PATCH',
-    body: JSON.stringify({ fieldData: fields }),
+    body: JSON.stringify(body),
   });
 }
 
@@ -139,6 +161,7 @@ export async function getCollectionFields(collectionId, token) {
   const data = await wfFetch(token, `/collections/${collectionId}`);
   return data.fields ?? data.collection?.fields ?? [];
 }
+
 
 /** Publish a site to its webflow.io staging subdomain only. */
 export async function publishToStaging(siteId, token, dryRun = false) {
@@ -164,43 +187,38 @@ export async function listPages(siteId, token) {
 }
 
 /**
- * Query elements on a page.
- * Webflow Data API: GET /v2/pages/{pageId}/dom/nodes
+ * Get all static DOM nodes for a page (client-side filtering only).
+ * Webflow Data API: GET /v2/pages/{pageId}/dom
+ *
+ * The API does NOT support server-side cssClass/text/type filtering —
+ * callers must filter the returned nodes themselves.
+ * Returns { nodes: [...] } or null on error.
  */
-export async function queryElements(siteId, pageId, token, { text, cssClass, type, scopeComponentId } = {}) {
-  const params = new URLSearchParams();
-  if (text) params.set('text', text);
-  if (cssClass) params.set('cssClass', cssClass);
-  if (type) params.set('type', type);
-  if (scopeComponentId) params.set('scopeComponentId', scopeComponentId);
-
-  const qs = params.toString() ? `?${params}` : '';
-  return wfFetch(token, `/pages/${pageId}/dom/nodes${qs}`);
-}
-
-/**
- * Get all elements inside a component definition.
- * Webflow Data API: GET /v2/components/{componentId}/dom/nodes
- */
-export async function getAllComponentElements(componentId, token) {
-  return wfFetch(token, `/components/${componentId}/dom/nodes`);
-}
-
-/**
- * Set text on a static DOM node.
- * Webflow Data API: POST /v2/pages/{pageId}/dom
- */
-export async function setElementText(pageId, elementId, text, token, { scopeComponentId } = {}, dryRun = false) {
-  if (dryRun) {
-    console.log(`[DRY RUN] Would set text on element ${elementId} -> "${text}"`);
-    return;
+export async function queryElements(siteId, pageId, token, _filters = {}) {
+  try {
+    return await wfFetch(token, `/pages/${pageId}/dom`);
+  } catch (err) {
+    console.warn(`  queryElements failed for page ${pageId}: ${err.message}`);
+    return null;
   }
-
-  const node = { nodeId: elementId, text };
-  if (scopeComponentId) node.scopeComponentId = scopeComponentId;
-
-  return wfFetch(token, `/pages/${pageId}/dom`, {
-    method: 'POST',
-    body: JSON.stringify({ nodes: [node] }),
-  });
 }
+
+/**
+ * Get all static DOM nodes for a component definition.
+ * Webflow Data API: GET /v2/sites/{siteId}/components/{componentId}/dom
+ */
+export async function getAllComponentElements(siteId, componentId, token) {
+  try {
+    return await wfFetch(token, `/sites/${siteId}/components/${componentId}/dom`);
+  } catch (err) {
+    console.warn(`  getAllComponentElements failed for ${componentId}: ${err.message}`);
+    return null;
+  }
+}
+
+// NOTE: there is no setElementText/write-via-REST function here. Webflow's Data API
+// v2 (POST /pages/{id}/dom) can only write to a SECONDARY locale -- primary-locale
+// static content can never be written this way, confirmed against Webflow's own
+// docs and via live testing. See static-updater.js's module comment for the actual
+// mechanism (Designer/App API via MCP) and its own limits (component-scoped text
+// still needs a live Designer session).

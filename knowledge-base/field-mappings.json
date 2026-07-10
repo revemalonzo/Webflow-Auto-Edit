@@ -1,5 +1,5 @@
 {
-  "_comment": "Maps CSS selectors/classes to collection field slugs. Key format: '{collection}:{cssClass}'",
+  "_comment": "Maps CSS selectors to Webflow CMS field slugs. Auto-learned by AI resolver and cached here.",
   "mappings": [
     {
       "collection": "Pages - Hero Sections",
@@ -12,13 +12,6 @@
       "fieldSlug": "paragraph"
     },
     {
-      "collection": "Pages - Hero Sections",
-      "cssClass": ".hero-button",
-      "fieldSlugText": "cta-text",
-      "fieldSlugHref": "cta-page-link-2",
-      "note": "Check whether change is text or href"
-    },
-    {
       "collection": "Coaches",
       "cssClass": ".coach-profession",
       "fieldSlug": "designation"
@@ -27,12 +20,6 @@
       "collection": "Programs",
       "cssClass": ".header-subheading",
       "fieldSlug": "description"
-    },
-    {
-      "collection": "Programs",
-      "cssClass": ".fc-white",
-      "fieldSlug": "description",
-      "context": "programs section"
     },
     {
       "collection": "Programs",
@@ -48,10 +35,222 @@
       "collection": "Amenities",
       "cssClass": ".amenity-name",
       "fieldSlug": "name"
+    },
+    {
+      "collection": "FAQs",
+      "cssClass": ".h2-section",
+      "fieldSlug": "faq-heading",
+      "_learnedAt": "2026-07-09T13:51:50.576Z"
+    },
+    {
+      "collection": "FAQs",
+      "cssClass": ".h2-new-line",
+      "fieldSlug": "faq-heading-2",
+      "_learnedAt": "2026-07-09T13:51:53.147Z"
+    },
+    {
+      "collection": "FAQs",
+      "cssClass": ".dropdown-heading",
+      "fieldSlug": "question-4",
+      "_learnedAt": "2026-07-09T13:52:11.278Z"
+    },
+    {
+      "collection": "Locations",
+      "cssClass": ".ps-map",
+      "fieldSlug": "location-about-2",
+      "_learnedAt": "2026-07-09T16:36:49.728Z"
+    },
+    {
+      "collection": "Programs",
+      "cssClass": ".w-richtext",
+      "fieldSlug": "program-description-rt",
+      "_learnedAt": "2026-07-09T16:59:23.595Z"
+    },
+    {
+      "collection": "FAQs",
+      "cssClass": ".fc-white",
+      "fieldSlug": "answer-3",
+      "_learnedAt": "2026-07-09T16:59:26.053Z"
+    },
+    {
+      "collection": "Programs",
+      "cssClass": ".w-richtext",
+      "fieldSlug": "description",
+      "_learnedAt": "2026-07-09T16:59:30.748Z"
+    },
+    {
+      "collection": "Pages - Hero Sections",
+      "cssClass": ".h2-section",
+      "fieldSlug": "heading",
+      "_learnedAt": "2026-07-09T17:28:44.318Z"
+    },
+    {
+      "collection": "Programs",
+      "cssClass": ".overflow-visible",
+      "fieldSlug": "program-title-text",
+      "_learnedAt": "2026-07-09T17:28:59.262Z"
+    },
+    {
+      "collection": "Pages - Hero Sections",
+      "cssClass": ".fc-white",
+      "fieldSlug": "heading",
+      "_learnedAt": "2026-07-09T17:29:07.926Z"
+    },
+    {
+      "collection": "CTA Sections",
+      "cssClass": ".fc-white",
+      "fieldSlug": "paragraph",
+      "_learnedAt": "2026-07-09T23:35:54.528Z"
+    },
+    {
+      "collection": "Pages - Hero Sections",
+      "cssClass": ".p-black",
+      "fieldSlug": "paragraph",
+      "_learnedAt": "2026-07-09T23:36:10.477Z"
+    },
+    {
+      "collection": "Pages - Hero Sections",
+      "cssClass": ".heading-2",
+      "fieldSlug": "heading",
+      "_learnedAt": "2026-07-09T23:36:34.226Z"
+    },
+    {
+      "collection": "Pages - Hero Sections",
+      "cssClass": ".heading-10",
+      "fieldSlug": "heading",
+      "_learnedAt": "2026-07-09T23:37:27.718Z"
+    },
+    {
+      "collection": "Locations",
+      "cssClass": ".h2-map",
+      "fieldSlug": "location-about-2",
+      "_learnedAt": "2026-07-09T23:40:49.132Z"
+    },
+    {
+      "collection": "FAQs",
+      "cssClass": ".dp-toggle",
+      "fieldSlug": "question-3",
+      "_learnedAt": "2026-07-09T23:41:48.277Z"
+    },
+    {
+      "collection": "Events/Challenges",
+      "cssClass": ".w-inline-block",
+      "fieldSlug": "steps-cta-text",
+      "_learnedAt": "2026-07-09T23:49:10.620Z"
+    },
+    {
+      "collection": "Programs",
+      "cssClass": ".heading-7",
+      "fieldSlug": "program-title-text",
+      "_learnedAt": "2026-07-09T23:49:53.187Z"
+    },
+    {
+      "collection": "Pages - Hero Sections",
+      "cssClass": ".text-link",
+      "fieldSlug": "paragraph",
+      "_learnedAt": "2026-07-09T23:50:43.114Z"
+    },
+    {
+      "collection": "Pages - Hero Sections",
+      "cssClass": ".w-richtext",
+      "fieldSlug": "paragraph",
+      "_learnedAt": "2026-07-10T03:08:49.501Z"
+    },
+    {
+      "collection": "Locations",
+      "cssClass": ".address",
+      "fieldSlug": "location-full-address",
+      "_learnedAt": "2026-07-10T04:05:00.131Z"
+    },
+    {
+      "collection": "Pages - Hero Sections",
+      "cssClass": ".heading-8---black",
+      "fieldSlug": "heading",
+      "_learnedAt": "2026-07-10T04:05:50.842Z"
+    },
+    {
+      "collection": "Locations",
+      "cssClass": ".pm-local",
+      "fieldSlug": "location-about-2",
+      "_learnedAt": "2026-07-10T04:11:48.013Z"
+    },
+    {
+      "collection": "Pages - Hero Sections",
+      "cssClass": ".paragraph-hero",
+      "fieldSlug": "paragraph",
+      "_learnedAt": "2026-07-10T04:11:50.415Z"
+    },
+    {
+      "collection": "Pages - Hero Sections",
+      "cssClass": ".class-item",
+      "fieldSlug": "cta-page-link-2",
+      "_learnedAt": "2026-07-10T04:36:21.067Z"
+    },
+    {
+      "collection": "Pages - Hero Sections",
+      "cssClass": ".w-inline-block",
+      "fieldSlug": "cta-text",
+      "_learnedAt": "2026-07-10T04:37:16.224Z"
+    },
+    {
+      "collection": "Pages - Hero Sections",
+      "cssClass": ".paragraph-cta",
+      "fieldSlug": "paragraph",
+      "_learnedAt": "2026-07-10T04:38:27.556Z"
+    },
+    {
+      "collection": "Pages - Hero Sections",
+      "cssClass": ".get-started-cta",
+      "fieldSlug": "cta-text",
+      "_learnedAt": "2026-07-10T04:43:21.194Z"
+    },
+    {
+      "collection": "Pages - Hero Sections",
+      "cssClass": ".navbar",
+      "fieldSlug": "paragraph",
+      "_learnedAt": "2026-07-10T04:45:10.207Z"
+    },
+    {
+      "collection": "Pages - Hero Sections",
+      "cssClass": ".hero-img-overlay",
+      "fieldSlug": "heading",
+      "_learnedAt": "2026-07-10T04:49:27.690Z"
+    },
+    {
+      "collection": "Pages - Hero Sections",
+      "cssClass": ".hero-h1-3",
+      "fieldSlug": "heading",
+      "_learnedAt": "2026-07-10T05:06:36.512Z"
+    },
+    {
+      "collection": "Pages - Hero Sections",
+      "cssClass": ".benfit-paragraph-spacer",
+      "fieldSlug": "paragraph",
+      "_learnedAt": "2026-07-10T05:18:26.416Z"
+    },
+    {
+      "collection": "Pages - Hero Sections",
+      "cssClass": ".heading-spacer",
+      "fieldSlug": "heading",
+      "_learnedAt": "2026-07-10T05:18:57.748Z"
+    },
+    {
+      "collection": "Programs",
+      "cssClass": ".program-text-wrap",
+      "fieldSlug": "program-detail-description",
+      "_learnedAt": "2026-07-10T08:02:59.971Z"
+    },
+    {
+      "collection": "Coaches",
+      "cssClass": ".w-richtext",
+      "fieldSlug": "coach-bio",
+      "_learnedAt": "2026-07-10T08:03:47.241Z"
+    },
+    {
+      "collection": "3 Steps",
+      "cssClass": ".steps-card",
+      "fieldSlug": "step-2-title",
+      "_learnedAt": "2026-07-10T09:20:09.567Z"
     }
-  ],
-  "notes": {
-    "richTextFields": "Preserve existing HTML structure when updating rich text fields",
-    "skipGetCollectionDetails": "If URL+CSS class matches this table exactly, use field slug directly — skip get_collection_details"
-  }
+  ]
 }

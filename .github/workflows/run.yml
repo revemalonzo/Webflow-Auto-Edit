@@ -1,13 +1,22 @@
-name: Webflow Text Updater
+name: Webflow Hybrid Updater
 
 on:
-  # Manual trigger only -- enable schedule when ready for autonomous runs
+  # Manual trigger only -- this is REST-only (CMS field text/image/link + static
+  # AI-guess fallback). It does NOT have the MCP-powered component/Designer-level
+  # capability an interactive Claude Code session has (see CLAUDE.md) -- don't
+  # enable a cron schedule here expecting parity with that. Re-enable schedule
+  # only after this has run clean a few times on real (non-dry-run) batches.
   workflow_dispatch:
     inputs:
       batch_url:
         description: 'Linear batch URL (leave blank for normal polling run)'
         required: false
         type: string
+      discover_limit:
+        description: 'Also auto-discover N more batches from the backlog (0 = off)'
+        required: false
+        type: string
+        default: '0'
       dry_run:
         description: 'Dry run -- read only, no writes'
         required: false
@@ -16,7 +25,7 @@ on:
 
 jobs:
   update:
-    name: Run text updater
+    name: Run hybrid updater
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -41,7 +50,10 @@ jobs:
           WEBFLOW_API_TOKEN_4: ${{ secrets.WEBFLOW_API_TOKEN_4 }}
           BUGHERD_API_KEY: ${{ secrets.BUGHERD_API_KEY }}
           LINEAR_API_KEY: ${{ secrets.LINEAR_API_KEY }}
-          BATCH_URL: ${{ inputs.batch_url }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME }}
+          HYBRID_BATCH_URLS: ${{ inputs.batch_url }}
+          DISCOVER_BATCH_LIMIT: ${{ inputs.discover_limit || '0' }}
           DRY_RUN: ${{ inputs.dry_run || 'false' }}
 
-        run: node src/index.js
+        run: node src/hybrid-index.js

@@ -6,7 +6,10 @@
       "aiTextChange": "54a88986-f95b-449f-b00c-22e75c59b5b6",
       "aiEdited": "d772b67f-d625-48e3-bb7c-d857182a8f3b",
       "aiReviewed": "9d17e307-3241-4f75-8621-e4c7fa700cc6",
-      "parentIssue": "c9b36224-3f2c-48e7-b562-c505c2e229d7"
+      "aiImageSwap": "fe395aa5-eef9-4029-b336-cfe110cdd32e",
+      "parentIssue": "c9b36224-3f2c-48e7-b562-c505c2e229d7",
+      "aiOutOfScope": "354faa60-3049-4216-9b87-ffb21598620c",
+      "aiDuplicate": "6c23c9c5-56c8-40bf-876f-9d0862267513"
     },
     "states": {
       "editPassToQA": "ed78eb42-1372-45c6-a349-25607f52344e",

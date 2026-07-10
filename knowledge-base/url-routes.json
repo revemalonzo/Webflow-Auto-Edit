@@ -18,7 +18,9 @@
   "crossCollectionOverrides": {
     "/programs/{slug}": {
       "section.cta-section": "CTA Sections",
-      "section.faqs-section": "FAQs"
+      "section.faqs-section": "FAQs",
+      "address.main-section": "Locations",
+      "qa-mapembed": "Locations"
     }
   },
   "notes": {

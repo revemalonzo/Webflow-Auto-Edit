@@ -20,7 +20,7 @@
  *   - All edited, all skipped, or solo tickets with no batch structure
  */
 
-import { setParent, addLabels, postComment } from './linear-client.js';
+import { setParent, addLabels, postComment, getIssue } from './linear-client.js';
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 const knownIds = require('../knowledge-base/known-ids.json');
@@ -37,7 +37,9 @@ const DRY_RUN = process.env.DRY_RUN === 'true';
  */
 export async function runGroupingStep(results, parentTicket, batchType) {
   const edited  = results.filter((r) => r.outcome === 'updated').map((r) => r.ticket);
-  const skipped = results.filter((r) => r.outcome === 'skipped' || r.outcome === 'error').map((r) => r.ticket);
+  // needs-mcp-write tickets haven't actually been edited yet (no state/label change
+  // has happened) -- group them with skipped/error for deconsolidation purposes.
+  const skipped = results.filter((r) => r.outcome === 'skipped' || r.outcome === 'error' || r.outcome === 'needs-mcp-write').map((r) => r.ticket);
 
   // Edge case: all same outcome or solo — nothing to restructure
   if (edited.length === 0 || skipped.length === 0) {
@@ -68,8 +70,12 @@ async function handleNewEditGrouping(edited, skipped) {
 
   console.log(`Step 9 (New Edit): making ${newParent.identifier} the parent of ${children.map((c) => c.identifier).join(', ')}`);
 
-  // Add Parent Issue label to the new parent
-  const parentLabelIds = newParent.labels?.nodes?.map((l) => l.id) ?? [];
+  // Add Parent Issue label to the new parent. Refetch first -- newParent's labels
+  // reflect the START of this run, before this same run's passToQA/skip treatment
+  // added/removed labels on it. Using the stale snapshot here silently reverts
+  // those changes (confirmed bug: a just-added ai:edited label got erased this way).
+  const freshParent = await getIssue(newParent.id);
+  const parentLabelIds = freshParent.labels?.nodes?.map((l) => l.id) ?? [];
   await addLabels(newParent.id, parentLabelIds, [labels.parentIssue], DRY_RUN);
 
   // Attach children
@@ -114,8 +120,10 @@ async function handleQueueDeconsolidation(edited, skipped, originalParent) {
     await setParent(ticket.id, null, DRY_RUN);
   }
 
-  // Re-parent: oldest of detached group becomes new parent
-  const newParentLabelIds = newParent.labels?.nodes?.map((l) => l.id) ?? [];
+  // Re-parent: oldest of detached group becomes new parent. Refetch first -- same
+  // stale-snapshot issue as the New Edit path above.
+  const freshParent = await getIssue(newParent.id);
+  const newParentLabelIds = freshParent.labels?.nodes?.map((l) => l.id) ?? [];
   await addLabels(newParent.id, newParentLabelIds, [labels.parentIssue], DRY_RUN);
 
   for (const child of children) {

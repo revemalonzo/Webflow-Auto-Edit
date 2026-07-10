@@ -1,0 +1,46 @@
+{
+  "_comment": "URL + selector -> (collection, image type) routing for the image updater. Mirrors url-routes.json's shape but keyed to image fields, not text fields. Ported from wf-image-updaterSKILL.md Step 5.",
+  "exactRoutes": {
+    "/schedule": { "collection": "Pages - Hero Sections", "imageType": "header-sections" },
+    "/blog": { "collection": "Pages - Hero Sections", "imageType": "header-sections" },
+    "/contact": { "collection": "Pages - Hero Sections", "imageType": "header-sections" }
+  },
+  "prefixRoutes": [
+    { "prefix": "/programs/", "collection": "Programs", "imageType": "programs-hero" },
+    { "prefix": "/coaches/", "collection": "Coaches", "imageType": "coaches" },
+    { "prefix": "/blog/", "collection": "Blog: Articles", "imageType": "blog" }
+  ],
+  "universalSelectorOverrides": [
+    { "signals": ["cta-section", "final-cta"], "collection": "CTA Sections", "imageType": "final-cta" },
+    { "signals": ["amenities"], "collection": "Amenities", "imageType": "amenities" },
+    { "signals": ["grow-chat", "chat-widget"], "collection": "GROW Entries", "imageType": "chat-widget-logo" }
+  ],
+  "homepage": {
+    "heroSignals": ["hero-section", "clw-hero", "herosection"],
+    "heroCollection": "Pages - Hero Sections",
+    "heroImageType": "header-sections",
+    "programsSignals": ["cl-programs", "topprograms"],
+    "programsCollection": "Programs",
+    "programsImageType": "programs-home",
+    "communitySignals": ["community"],
+    "communityCollection": "Main Templates",
+    "communityImageType": "community"
+  },
+  "about": {
+    "coachesSignals": ["coaches-section", "coach-"],
+    "coachesCollection": "Coaches",
+    "coachesImageType": "coaches",
+    "headerSignals": ["hero-section", "header", "hs-subpage"],
+    "headerCollection": "Pages - Hero Sections",
+    "headerImageType": "header-sections",
+    "bodyCollection": "Main Templates",
+    "bodyImageType": "about"
+  },
+  "blog": {
+    "bodySignals": ["rich-text", "post-body", "article-content"],
+    "bodyImageType": "blog-rich-text",
+    "headerSignals": ["header", "hero"],
+    "headerImageType": "blog-header",
+    "defaultImageType": "blog-thumbnail"
+  }
+}

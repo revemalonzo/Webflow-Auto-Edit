@@ -1,0 +1,165 @@
+{
+  "_comment": "Maps CSS selectors to Webflow image field slugs, per collection + image type. Auto-learned after heuristic/AI resolution and cached here so repeat tickets on the same selector/collection skip the AI call entirely.",
+  "mappings": [
+    {
+      "collection": "Programs",
+      "imageType": "programs-home",
+      "cssClass": ".mi-static",
+      "fieldSlug": "program-image-home",
+      "mobileFieldSlug": null,
+      "_learnedAt": "2026-07-09T21:07:51.051Z"
+    },
+    {
+      "collection": "Main Templates",
+      "imageType": "community",
+      "cssClass": ".mi-static",
+      "fieldSlug": "community-2",
+      "mobileFieldSlug": null,
+      "_learnedAt": "2026-07-09T21:14:13.192Z"
+    },
+    {
+      "collection": "Amenities",
+      "imageType": "amenities",
+      "cssClass": ".mb-overlay",
+      "fieldSlug": "image",
+      "mobileFieldSlug": null,
+      "_learnedAt": "2026-07-09T21:14:20.532Z"
+    },
+    {
+      "collection": "Pages - Hero Sections",
+      "imageType": "header-sections",
+      "cssClass": ".hero-img-overlay",
+      "fieldSlug": "image-1",
+      "mobileFieldSlug": "hero-image-3-mobile",
+      "_learnedAt": "2026-07-09T21:14:32.286Z"
+    },
+    {
+      "collection": "Pages - Hero Sections",
+      "imageType": "header-sections",
+      "cssClass": ".program-image",
+      "fieldSlug": "image-1",
+      "mobileFieldSlug": "hero-image-3-mobile",
+      "_learnedAt": "2026-07-09T23:38:00.989Z"
+    },
+    {
+      "collection": "Programs",
+      "imageType": "programs-hero",
+      "cssClass": ".w-container",
+      "fieldSlug": "gallery-image-1",
+      "mobileFieldSlug": "gallery-image-1",
+      "_learnedAt": "2026-07-09T23:48:19.725Z"
+    },
+    {
+      "collection": "Programs",
+      "imageType": "programs-hero",
+      "cssClass": ".w-container",
+      "fieldSlug": "image",
+      "mobileFieldSlug": "image-mobile",
+      "_learnedAt": "2026-07-09T23:48:26.887Z"
+    },
+    {
+      "collection": "Programs",
+      "imageType": "programs-hero",
+      "cssClass": ".hero-image-gradient",
+      "fieldSlug": "image",
+      "mobileFieldSlug": "image-mobile",
+      "_learnedAt": "2026-07-09T23:48:45.418Z"
+    },
+    {
+      "collection": "Programs",
+      "imageType": "programs-home",
+      "cssClass": ".w-dyn-items",
+      "fieldSlug": "program-image-home",
+      "mobileFieldSlug": null,
+      "_learnedAt": "2026-07-09T23:49:26.689Z"
+    },
+    {
+      "collection": "Pages - Hero Sections",
+      "imageType": "header-sections",
+      "cssClass": ".navbar",
+      "fieldSlug": "image-1",
+      "mobileFieldSlug": "hero-image-3-mobile",
+      "_learnedAt": "2026-07-09T23:50:06.835Z"
+    },
+    {
+      "collection": "Main Templates",
+      "imageType": "about",
+      "cssClass": ".mi-about-the-gym",
+      "fieldSlug": "about-us-image",
+      "mobileFieldSlug": null,
+      "_learnedAt": "2026-07-10T02:09:13.375Z"
+    },
+    {
+      "collection": "Pages - Hero Sections",
+      "imageType": "header-sections",
+      "cssClass": ".subheading",
+      "fieldSlug": "image-1",
+      "mobileFieldSlug": "hero-image-3-mobile",
+      "_learnedAt": "2026-07-10T03:53:29.123Z"
+    },
+    {
+      "collection": "Programs",
+      "imageType": "programs-hero",
+      "cssClass": ".hero-img-overlay",
+      "fieldSlug": "image",
+      "mobileFieldSlug": "image-mobile",
+      "_learnedAt": "2026-07-10T03:57:11.484Z"
+    },
+    {
+      "collection": "Pages - Hero Sections",
+      "imageType": "header-sections",
+      "cssClass": ".mb-overlay",
+      "fieldSlug": "image-1",
+      "mobileFieldSlug": "hero-image-3-mobile",
+      "_learnedAt": "2026-07-10T03:58:23.576Z"
+    },
+    {
+      "collection": "Coaches",
+      "imageType": "coaches",
+      "cssClass": ".w-embed",
+      "fieldSlug": "profile-image-2",
+      "mobileFieldSlug": null,
+      "_learnedAt": "2026-07-10T04:05:03.348Z"
+    },
+    {
+      "collection": "Programs",
+      "imageType": "programs-home",
+      "cssClass": ".program-image",
+      "fieldSlug": "program-image-home",
+      "mobileFieldSlug": null,
+      "_learnedAt": "2026-07-10T04:07:19.759Z"
+    },
+    {
+      "collection": "Pages - Hero Sections",
+      "imageType": "header-sections",
+      "cssClass": ".logo-img-2",
+      "fieldSlug": "image-1",
+      "mobileFieldSlug": "hero-image-3-mobile",
+      "_learnedAt": "2026-07-10T04:10:15.956Z"
+    },
+    {
+      "collection": "Pages - Hero Sections",
+      "imageType": "header-sections",
+      "cssClass": ".hero-image-gradient-overlay",
+      "fieldSlug": "image-1",
+      "mobileFieldSlug": "hero-image-3-mobile",
+      "_learnedAt": "2026-07-10T04:40:44.041Z"
+    },
+    {
+      "collection": "Programs",
+      "imageType": "programs-hero",
+      "cssClass": ".ss-under-hero",
+      "fieldSlug": "image",
+      "mobileFieldSlug": "image-mobile",
+      "_learnedAt": "2026-07-10T04:42:50.055Z"
+    },
+    {
+      "collection": "Programs",
+      "imageType": "programs-hero",
+      "cssClass": ".navbar",
+      "fieldSlug": "image",
+      "mobileFieldSlug": "image-mobile",
+      "_learnedAt": "2026-07-10T04:49:07.210Z"
+    }
+  ]
+}

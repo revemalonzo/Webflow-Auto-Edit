@@ -1,10 +1,12 @@
 /**
- * Entry point -- mirrors SKILL.md run flow exactly.
+ * Entry point for the image updater -- mirrors index.js's flow, adapted for
+ * wf-image-updaterSKILL.md. Separate pipeline from the text updater for now
+ * (shares webflow-client.js, linear-client.js, grouping.js).
  *
  * Usage:
- *   node src/index.js                          # normal polling run
- *   BATCH_URL=https://linear.app/... node src/index.js   # manual override
- *   DRY_RUN=true node src/index.js             # read-only test
+ *   node src/image-index.js                                # normal polling run
+ *   IMAGE_BATCH_URL=https://linear.app/... node src/image-index.js   # manual override
+ *   DRY_RUN=true node src/image-index.js                    # read-only test
  */
 
 import 'dotenv/config';
@@ -13,23 +15,20 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { createRequire } from 'module';
 
-import { pollTickets, pollTicketsByState, getIssue, listSubissues, postComment, applySkipTreatment } from './linear-client.js';
+import { pollTickets, pollTicketsByState, getIssue, listSubissues, postComment, applyImageSkipTreatment } from './linear-client.js';
 import { resolveSite, publishToStaging } from './webflow-client.js';
-import { processTicket } from './ticket-processor.js';
+import { processImageTicket } from './image-processor.js';
 import { runGroupingStep } from './grouping.js';
-import { resolveLocationsConflicts } from './conflicts.js';
 
 const require = createRequire(import.meta.url);
 const knownIds = require('../knowledge-base/known-ids.json');
 
 const { labels, states } = knownIds.linear;
-const DRY_RUN   = process.env.DRY_RUN === 'true';
-const BATCH_URL = process.env.BATCH_URL ?? null;
+const DRY_RUN = process.env.DRY_RUN === 'true';
+const IMAGE_BATCH_URL = process.env.IMAGE_BATCH_URL ?? null;
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const PROGRESS_FILE = path.join(__dirname, '..', 'progress', 'run-progress.json');
-
-// --- Progress file helpers ---
+const PROGRESS_FILE = path.join(__dirname, '..', 'progress', 'image-run-progress.json');
 
 function readProgress() {
   try {
@@ -47,10 +46,7 @@ function writeProgress(data) {
   fs.writeFileSync(PROGRESS_FILE, JSON.stringify(data, null, 2));
 }
 
-// --- Batch detection helpers ---
-
 function pickBatch(tickets) {
-  // Group by parent ID -- pick oldest parent group
   const byParent = new Map();
   const solo = [];
 
@@ -81,7 +77,6 @@ function pickBatch(tickets) {
     return { batch: chosen, type: 'queue' };
   }
 
-  // New Edit batches: group by exact name match
   const byName = new Map();
   for (const t of solo) {
     const key = t.title.trim().toLowerCase();
@@ -95,50 +90,35 @@ function pickBatch(tickets) {
     }
   }
 
-  // Fallback: 5 oldest solo tickets
   solo.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
   return { batch: solo.slice(0, 5), type: 'newEdit' };
 }
 
-/**
- * Parse the hostname from a page URL and determine whether it is a
- * webflow.io subdomain or a custom domain.
- *
- * Returns { shortName, customDomain } where exactly one is non-null:
- *   shortName    - webflow.io subdomain (e.g. "my-gym") if URL is *.webflow.io
- *   customDomain - bare hostname without www. (e.g. "mygym.com") if custom domain
- */
 function parseSiteFromUrl(pageUrl) {
   const hostname = new URL(pageUrl).hostname;
   if (hostname.endsWith('.webflow.io')) {
-    // Strip subdomain prefix only (handles "my-gym.webflow.io" correctly)
     const shortName = hostname.replace(/\.webflow\.io$/, '').split('.')[0];
     return { shortName, customDomain: null };
   }
-  // Custom domain: strip www. for normalization
   const customDomain = hostname.replace(/^www\./i, '');
   return { shortName: null, customDomain };
 }
 
-// --- Main ---
-
 async function main() {
-  console.log(`[${new Date().toISOString()}] webflow-text-updater starting${DRY_RUN ? ' (DRY RUN)' : ''}`);
+  console.log(`[${new Date().toISOString()}] webflow-image-updater starting${DRY_RUN ? ' (DRY RUN)' : ''}`);
 
-  // -- Recovery check --
   const resumeData = readProgress();
   if (resumeData) {
     console.log(`Resuming mid-run from progress file. Already processed: ${resumeData.processed?.join(', ')}`);
   }
 
-  // -- Step 1: Build work set --
   let workSet = [];
   let batchType = 'newEdit';
   let parentTicket = null;
 
-  if (BATCH_URL) {
-    const identifier = BATCH_URL.match(/\/([A-Z]+-\d+)/)?.[1];
-    if (!identifier) throw new Error(`Could not extract issue ID from BATCH_URL: ${BATCH_URL}`);
+  if (IMAGE_BATCH_URL) {
+    const identifier = IMAGE_BATCH_URL.match(/\/([A-Z]+-\d+)/)?.[1];
+    if (!identifier) throw new Error(`Could not extract issue ID from IMAGE_BATCH_URL: ${IMAGE_BATCH_URL}`);
 
     const issue = await getIssue(identifier);
     const isParent =
@@ -148,10 +128,9 @@ async function main() {
     if (isParent) {
       parentTicket = issue;
       const subissues = await listSubissues(issue.id);
-      // A batch is the parent issue + its sub-issues -- the parent itself is a
-      // real, independently automatable ticket (Step 9's "Scenario 1: parent was
-      // edited" exists specifically to handle this) and must go through the same
-      // pipeline, not just anchor the group.
+      // Batch = parent + sub-issues -- include the parent in processing (see text
+      // updater's index.js for why this matters: Step 13's "Scenario 1: parent was
+      // edited" only ever fires if the parent actually goes through the pipeline).
       workSet = [issue, ...subissues];
       batchType = 'queue';
     } else {
@@ -161,16 +140,12 @@ async function main() {
 
     workSet = workSet.filter((t) => !t.labels?.nodes?.some((l) => l.id === labels.aiEdited));
 
-    // listSubissues() pulls every child regardless of state -- unlike the polling path below,
-    // which only ever looks at tickets already in one of these three states. Without this,
-    // tickets that already moved past the queue (e.g. already in Edit - Pass to QA) would get
-    // reprocessed just because they lack the ai:edited label.
     const automatableStateIds = new Set([states.newEdit, states.liveEditsQueue, states.notLiveEditsQueue]);
     const beforeStateFilter = workSet.length;
     workSet = workSet.filter((t) => automatableStateIds.has(t.state?.id));
     const excludedByState = beforeStateFilter - workSet.length;
     if (excludedByState > 0) {
-      console.log(`Excluded ${excludedByState} ticket(s) already past the queue stage (not in New Edit / Live Edits Queue / Not Live Edits Queue).`);
+      console.log(`Excluded ${excludedByState} ticket(s) already past the queue stage.`);
     }
   } else if (resumeData) {
     workSet = await Promise.all(resumeData.workSet.map((id) => getIssue(id)));
@@ -179,30 +154,12 @@ async function main() {
     if (resumeData.parentId) parentTicket = await getIssue(resumeData.parentId);
   } else {
     const pollCombos = [
-      { stateId: states.liveEditsQueue,    labelId: labels.aiAvailable  },
-      { stateId: states.notLiveEditsQueue, labelId: labels.aiAvailable  },
-      { stateId: states.newEdit,           labelId: labels.aiAvailable  },
-      { stateId: states.liveEditsQueue,    labelId: labels.aiTextChange },
-      { stateId: states.notLiveEditsQueue, labelId: labels.aiTextChange },
-      { stateId: states.newEdit,           labelId: labels.aiTextChange },
+      { stateId: states.liveEditsQueue,    labelId: labels.aiImageSwap },
+      { stateId: states.notLiveEditsQueue, labelId: labels.aiImageSwap },
+      { stateId: states.newEdit,           labelId: labels.aiImageSwap },
     ];
-
     const polls = await Promise.all(pollCombos.map((c) => pollTickets(c)));
-
-    // Some tickets never get tagged ai:available/ai:text-change by the upstream
-    // classifier (confirmed: an entire client's batch can go untagged) and would
-    // otherwise never surface here. Sweep each queue state directly and keep only
-    // tickets with NO other ai:* routing label -- ai:reviewed alone doesn't count,
-    // since it just means "reviewed," not "routed elsewhere." Our own skip-checker/
-    // router decides automatability for these, same as for labeled tickets.
-    const queueStateIds = [states.liveEditsQueue, states.notLiveEditsQueue, states.newEdit];
-    const stateSweeps = await Promise.all(queueStateIds.map((stateId) => pollTicketsByState({ stateId })));
-    const isRoutingLabel = (name) => name?.startsWith('ai:') && name !== 'ai:reviewed';
-    const unclassified = stateSweeps.flat().filter(
-      (t) => !t.labels?.nodes?.some((l) => isRoutingLabel(l.name))
-    );
-
-    const all = polls.flat().concat(unclassified);
+    const all = polls.flat();
 
     const seen = new Set();
     const eligible = all.filter((t) => {
@@ -211,12 +168,8 @@ async function main() {
       return !t.labels?.nodes?.some((l) => l.id === labels.aiEdited);
     });
 
-    if (unclassified.length > 0) {
-      console.log(`Found ${unclassified.length} ticket(s) in a queue state with no ai:* routing label -- including them for self-classification.`);
-    }
-
     if (eligible.length === 0) {
-      console.log('No eligible tickets found. Exiting.');
+      console.log('No pending image swap tickets this run.');
       return;
     }
 
@@ -245,8 +198,6 @@ async function main() {
 
   console.log(`Work set: [${batchType}] ${workSet.map((t) => t.identifier).join(', ')}`);
 
-  // -- Step 1.5: Resolve Webflow site --
-  // Use the first ticket that has a Page URL for site detection
   const sampleTicket = workSet.find((t) => t.description?.includes('**Page URL**')) ?? workSet[0];
   const pageUrlMatch = sampleTicket.description?.match(/\*\*Page URL\*\*[:\s]*\[?(https?:\/\/[^\s\]>)]+)/i);
 
@@ -265,33 +216,30 @@ async function main() {
   }
 
   const { shortName: parsedShortName, customDomain } = parsedSite;
-  const siteLabel = customDomain ?? parsedShortName; // for log messages
+  const siteLabel = customDomain ?? parsedShortName;
 
   let siteInfo;
   try {
     siteInfo = await resolveSite(parsedShortName, customDomain);
   } catch (err) {
     const blockedMsg = [
-      'Blocked -- Inaccessible Workspace',
+      '⚠️ Blocked — Inaccessible Workspace',
       `The Page URL is ${pageUrl}. Site "${siteLabel}" not found in any connected Webflow workspace.`,
-      'Pending change: see ticket description.',
       '',
-      'Labels ai:available and ai:text-change have been removed. This ticket requires manual action or workspace reconnection.',
+      `Label ${'`ai:image-swap`'} has been removed. This ticket requires manual action or workspace reconnection.`,
     ].join('\n');
     for (const t of workSet) {
       const existingLabelIds = t.labels?.nodes?.map((l) => l.id) ?? [];
       await postComment(t.id, blockedMsg, DRY_RUN);
-      await applySkipTreatment(t.id, existingLabelIds, DRY_RUN);
+      await applyImageSkipTreatment(t.id, existingLabelIds, DRY_RUN);
     }
     console.error(`Site blocked: ${err.message}`);
     return;
   }
 
-  // siteInfo.shortName is ALWAYS the webflow.io subdomain -- use it for staging URLs
   const { shortName } = siteInfo;
   console.log(`Site: ${siteLabel} -> ${siteInfo.siteId} (shortName: ${shortName}, token #${siteInfo.tokenIndex})`);
 
-  // Write initial progress file
   const progress = {
     runStarted: new Date().toISOString(),
     runComplete: false,
@@ -301,44 +249,14 @@ async function main() {
     processed: resumeData?.processed ?? [],
     skipped: resumeData?.skipped ?? [],
     errors: resumeData?.errors ?? [],
-    step9Done: false,
+    step12Done: false,
   };
   writeProgress(progress);
 
-  // -- Steps 5-8 setup: shared caches (also used by the conflict resolver below) --
   const collectionsCache = new Map();
-  const pagesCache = new Map();
+  const fieldsCache = new Map();
+  const siteContextCache = { value: null };
   const results = [];
-
-  // -- Pre-flight: Shared Locations item conflict detection --
-  const { skips: locationsSkips } = await resolveLocationsConflicts(workSet, {
-    siteId: siteInfo.siteId,
-    token: siteInfo.token,
-    collectionsCache,
-  });
-  if (locationsSkips.size > 0) {
-    console.log(`Locations conflicts detected for ${locationsSkips.size} ticket(s) -- honoring the most recent request, skipping the rest.`);
-    for (const ticket of workSet) {
-      const reason = locationsSkips.get(ticket.id);
-      if (reason) {
-        const existingLabelIds = ticket.labels?.nodes?.map((l) => l.id) ?? [];
-        await postComment(ticket.id, reason, DRY_RUN);
-        await applySkipTreatment(ticket.id, existingLabelIds, DRY_RUN);
-        progress.skipped.push(ticket.id);
-      }
-    }
-    writeProgress(progress);
-    // Remove the losing tickets from the work set; winners proceed to normal processing below.
-    workSet = workSet.filter((t) => !locationsSkips.has(t.id));
-  }
-
-  if (workSet.length === 0) {
-    console.log('All tickets in work set were Locations conflicts. Exiting.');
-    progress.runComplete = true;
-    writeProgress(progress);
-    return;
-  }
-
   const alreadyDone = new Set(resumeData?.processed ?? []);
 
   for (const ticket of workSet) {
@@ -349,8 +267,8 @@ async function main() {
 
     console.log(`Processing ${ticket.identifier}...`);
     try {
-      const result = await processTicket(
-        ticket, siteInfo.siteId, siteInfo.token, shortName, collectionsCache, pagesCache
+      const result = await processImageTicket(
+        ticket, siteInfo.siteId, siteInfo.token, shortName, siteInfo.displayName, collectionsCache, fieldsCache, siteContextCache
       );
       results.push(result);
       console.log(`  -> ${result.outcome}${result.reason ? ': ' + result.reason.slice(0, 80) : ''}`);
@@ -366,7 +284,6 @@ async function main() {
     writeProgress(progress);
   }
 
-  // -- Step 7: Publish to staging once --
   const anyUpdated = results.some((r) => r.outcome === 'updated');
   if (anyUpdated) {
     console.log(`Publishing ${shortName} to staging...`);
@@ -374,18 +291,16 @@ async function main() {
     console.log('  Published to staging');
   }
 
-  // -- Step 9: Grouping / deconsolidation --
-  console.log('Running Step 9 (grouping/deconsolidation)...');
+  console.log('Running Step 13 (grouping/deconsolidation)...');
   await runGroupingStep(results, parentTicket, batchType);
-  progress.step9Done = true;
+  progress.step12Done = true;
   writeProgress(progress);
 
-  // -- Step 10: Final report --
   const updated = results.filter((r) => r.outcome === 'updated').length;
   const skipped = results.filter((r) => r.outcome === 'skipped').length;
   const errors  = results.filter((r) => r.outcome === 'error').length;
 
-  console.log(`\nRun complete. Processed ${results.length} tickets: ${updated} updated + staged, ${skipped} skipped, ${errors} errors.`);
+  console.log(`\nRun complete. Processed ${results.length} image swap tickets: ${updated} updated + staged, ${skipped} skipped, ${errors} errors.`);
 
   progress.runComplete = true;
   writeProgress(progress);

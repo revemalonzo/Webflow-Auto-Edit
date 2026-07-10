@@ -54,5 +54,6 @@ export function isStaticSkip(selector, htmlSnapshot) {
   ) {
     return 'Static FAQ heading is hardcoded -- not editable via API.';
   }
+
   return null;
 }
