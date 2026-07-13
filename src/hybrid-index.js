@@ -292,7 +292,17 @@ async function processBatch(workSet, batchType, parentTicket) {
   const anyUpdated = results.some((r) => r.outcome === 'updated');
   if (anyUpdated) {
     console.log(`  Publishing ${shortName} to staging...`);
-    await publishToStaging(siteInfo.siteId, siteInfo.token, DRY_RUN);
+    // A publish failure (confirmed real: repeated 429s on a site hit by several
+    // batches back-to-back) must not crash the whole run -- main()'s only
+    // top-level catch calls process.exit(1), which previously killed every
+    // remaining batch/ticket even though their CMS writes had already succeeded
+    // and just weren't pushed to the staging preview yet. Log loudly and move on;
+    // a later run (or a manual publish) will catch the site up.
+    try {
+      await publishToStaging(siteInfo.siteId, siteInfo.token, DRY_RUN);
+    } catch (err) {
+      console.error(`  ⚠️ Publish to staging failed for ${shortName}: ${err.message} -- CMS writes above were still applied, just not yet published. Continuing with remaining batches.`);
+    }
   }
 
   console.log('  Running grouping/deconsolidation...');

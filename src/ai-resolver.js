@@ -62,6 +62,12 @@ const IMAGE_FIELD_MAPPINGS_PATH = path.join(__dirname, '..', 'knowledge-base', '
  *   pipeline and a supported image attachment is present, to enable "not_visual".
  * @returns {Promise<{ type: string, cleanValue: string|null, reason: string } | null>}
  *   null only on AI/network failure (caller should fall back to conservative skip).
+ *
+ * All five OpenAI calls in this file set temperature: 0. Confirmed real inconsistency
+ * (2026-07-11): the exact same ticket (an empty `hero-img-overlay` div with a real
+ * attached image) got three different diagnoses -- literal, ambiguous, structural --
+ * across three identical calls at the default temperature. Zero doesn't guarantee
+ * determinism, but it meaningfully reduces this class of flip-flopping.
  */
 export async function diagnoseRequest({ description, currentText, htmlSnapshot, hasImageAttachment = false }) {
   if (!process.env.OPENAI_API_KEY) return null;
@@ -77,13 +83,13 @@ export async function diagnoseRequest({ description, currentText, htmlSnapshot, 
     hasImageAttachment ? `\nNote: this ticket has an attached image file.` : '',
     ``,
     `Classify the request into exactly one type:`,
-    `- literal: the description IS the intended final replacement text for this element (verbatim, or wrapped in quotes as a delineation convention).`,
-    `- partial: the description asks to change only PART of the existing content (e.g. "add a sentence after X", "change the list to Y", "replace 'A' with 'B'"), not replace the whole thing.`,
+    `- literal: the description IS the intended final replacement text for this element (verbatim, or wrapped in quotes as a delineation convention). THIS INCLUDES cases phrased as an edit instruction ("change the wording to X", "update this to say X") WHENEVER the current text above is a single short sentence/heading/CTA/button-label and the new value is a complete, similarly-scoped replacement for that whole element -- e.g. current="<h3>Book Your Trial Class</h3>", new="Book Your Consultation" IS literal (a full one-heading swap), NOT partial, even though the request says "change ... to". THIS ALSO INCLUDES short marketing headlines/CTAs that happen to end in a question mark ("READY TO START YOUR JOURNEY?", "WANT RESULTS?") -- a trailing "?" on content that reads as on-page marketing copy does NOT make it a question or instruction directed at you; classify it as literal.`,
+    `- partial: the description asks to change only PART of the existing content, and the CURRENT text above visibly contains MULTIPLE distinct sentences, list items, or sections (a real paragraph/list, not a single heading or one-liner) where the request is clearly asking to change just one of them, leaving the rest of the block intact (e.g. "add a sentence after X", "replace 'A' with 'B' in this paragraph"). Do NOT use partial just because the request is WORDED as an edit instruction -- check the current text's actual length/structure first (see the literal examples above).`,
     `- new_item: the description asks to add a brand-new page/program/item/section, not edit this existing one.`,
-    `- structural: a layout/positioning/removal/reordering request with no literal text to write (e.g. "remove this FAQ", "center the buttons", "reorder the programs").`,
+    `- structural: a layout/positioning/removal/reordering request with no literal text to write (e.g. "remove this FAQ", "center the buttons", "reorder the programs"). A genuine question/instruction ADDRESSED TO YOU about the edit itself ("should I change this?", "can you also fix the color?") also falls here/ambiguous, not literal -- but see the literal bullet above for why a trailing "?" alone on marketing copy does NOT count as this.`,
     `- link_swap: the request wants to change WHERE a link/button/CTA points to (a new destination URL is given), NOT the visible display text of the element. E.g. "use this link instead: <url>", "change the button link to <url>", "point this to <url>". The key signal: a URL is given as the new TARGET/DESTINATION, not as a source to copy text from. If the request ALSO asks to change the visible label/text (e.g. "call this 'Summer Special' and use this link: <url>"), still use link_swap -- VALUE should be the new URL only; the caller handles the text change separately from currentText/htmlSnapshot context.`,
     `- ambiguous: also use this if the description points to an EXTERNAL URL/page as the SOURCE of replacement content to copy/transcribe ("use the bio from X", "copy the text from our old site at Y") -- that requires fetching and transcribing content this pipeline cannot do; never write the instruction sentence itself as if it were the content. Do not confuse this with link_swap: if the URL is a new link DESTINATION (not something to read text from), use link_swap instead.`,
-    hasImageAttachment ? `- not_visual: the request does NOT name/describe a specific new photo to swap in -- it either (a) asks something unrelated (SEO/meta, a general question) with a screenshot attached, or (b) reports a BUG or broken behavior (something hidden, misaligned, missing, wrong, not displaying correctly on some device) where the attachment is a screenshot ILLUSTRATING the problem, not new content to use. Ask yourself: does this describe a photo to insert, or a problem to fix? If it's a problem/bug report, use not_visual even if a file is attached.` : '',
+    hasImageAttachment ? `- not_visual: the request does NOT name/describe a specific new photo to swap in -- it either (a) asks something unrelated (SEO/meta, a general question) with a screenshot attached, or (b) reports a BUG or broken behavior (something hidden, misaligned, missing, wrong, not displaying correctly on some device) where the attachment is a screenshot ILLUSTRATING the problem, not new content to use. Ask yourself: does this describe a photo to insert, or a problem to fix? If it's a problem/bug report, use not_visual even if a file is attached. CRITICAL EXCEPTION, apply this before anything else above: whenever hasImageAttachment is true (there IS a real attached image file) AND the current element/HTML above is a single, clearly-image-shaped thing (an <img> tag, a class/id suggesting a photo/background-image slot like "hero-img", "main-img", "photo", "img-overlay", etc.), classify as literal, NOT not_visual/ambiguous -- this is true EVEN IF the description text is extremely short or vague ("Home page photo", "Change photo to this", "use attached image"). A real attachment plus one obvious image-shaped target is, by itself, a complete and unambiguous image-swap request; terse wording alone is never a reason to call it ambiguous or not_visual. Only classify not_visual/ambiguous here if the description itself describes a bug/problem, or points elsewhere, or the current element clearly is NOT an image (e.g. it's a text heading).` : '',
     `- ambiguous: none of the above fit confidently.`,
     ``,
     `Reply in EXACTLY this format (3 lines, no extra commentary):`,
@@ -97,6 +103,7 @@ export async function diagnoseRequest({ description, currentText, htmlSnapshot, 
     const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     const res = await client.chat.completions.create({
       model: 'gpt-4o-mini',
+      temperature: 0,
       max_tokens: 400,
       messages: [{ role: 'user', content: prompt }],
     });
@@ -155,6 +162,7 @@ export async function resolveFieldWithAI(collectionName, fields, selector, htmlS
     const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     const res = await client.chat.completions.create({
       model: 'gpt-4o-mini',
+      temperature: 0,
       max_tokens: 50,
       messages: [{ role: 'user', content: prompt }],
     });
@@ -216,6 +224,7 @@ export async function resolveImageFieldWithAI(collectionName, fields, selector, 
     const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     const res = await client.chat.completions.create({
       model: 'gpt-4o-mini',
+      temperature: 0,
       max_tokens: 50,
       messages: [{ role: 'user', content: prompt }],
     });
@@ -267,6 +276,7 @@ export async function resolveTemplatePageWithAI(urlPath, pages) {
     const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     const res = await client.chat.completions.create({
       model: 'gpt-4o-mini',
+      temperature: 0,
       max_tokens: 50,
       messages: [{ role: 'user', content: prompt }],
     });
@@ -325,6 +335,7 @@ export async function resolveElementWithAI(selector, htmlSnapshot, elements) {
     const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     const res = await client.chat.completions.create({
       model: 'gpt-4o-mini',
+      temperature: 0,
       max_tokens: 50,
       messages: [{ role: 'user', content: prompt }],
     });
@@ -347,12 +358,35 @@ export async function resolveElementWithAI(selector, htmlSnapshot, elements) {
   }
 }
 
+/**
+ * Pick the most specific CSS class from a selector to use as a cache key --
+ * skipping Webflow's own auto-generated utility classes (w-richtext, w-dyn-item,
+ * w-inline-block, w-nav-link, etc. -- anything Webflow itself stamps onto EVERY
+ * element of a given TYPE, regardless of which field/content it's bound to).
+ *
+ * Confirmed real, serious damage: `.w-richtext` got cached as "Programs -> means
+ * program-description-rt" from one ticket where that happened to be the target,
+ * then every OTHER ticket touching ANY RichText field on ANY Programs item (a
+ * totally different field, e.g. `pricing-and-details-2`) hit that same cache
+ * entry and overwrote program-description-rt instead -- destroying full program
+ * descriptions on two items, replacing them with a short price string, across
+ * multiple tickets before anyone noticed. `.at(-1)` (last class in the selector)
+ * is exactly wrong here: Webflow's own utility class is reliably the LAST class
+ * in a multi-class attribute (`class="pricing-and-details w-richtext"`), so the
+ * naive "last class" heuristic picks the generic one almost every time a
+ * meaningful custom class is also present.
+ */
+export function pickCacheableClass(selector) {
+  const classes = (selector ?? '').match(/\.([\w-]+)/g) ?? [];
+  const meaningful = classes.filter((c) => !/^\.w-/.test(c));
+  return meaningful.at(-1) ?? null;
+}
+
 export function learnFieldMapping(collectionName, selector, fieldSlug) {
   try {
     const data = JSON.parse(fs.readFileSync(MAPPINGS_PATH, 'utf8'));
 
-    const classes = selector.match(/\.([\w-]+)/g) ?? [];
-    const cssClass = classes.at(-1) ?? null;
+    const cssClass = pickCacheableClass(selector);
     if (!cssClass) return;
 
     const exists = data.mappings.some(
@@ -384,8 +418,7 @@ export function learnElementMapping(siteId, urlPath, selector, elementId, scopeC
   try {
     const data = JSON.parse(fs.readFileSync(ELEMENT_MAPPINGS_PATH, 'utf8'));
 
-    const classes = (selector ?? '').match(/\.([\w-]+)/g) ?? [];
-    const cssClass = classes.at(-1) ?? null;
+    const cssClass = pickCacheableClass(selector);
     if (!cssClass) return;
 
     const exists = data.mappings.some(
@@ -409,8 +442,7 @@ export function learnImageFieldMapping(collection, imageType, selector, fieldSlu
   try {
     const data = JSON.parse(fs.readFileSync(IMAGE_FIELD_MAPPINGS_PATH, 'utf8'));
 
-    const classes = (selector ?? '').match(/\.([\w-]+)/g) ?? [];
-    const cssClass = classes.at(-1) ?? null;
+    const cssClass = pickCacheableClass(selector);
     if (!cssClass) return;
 
     const exists = data.mappings.some(

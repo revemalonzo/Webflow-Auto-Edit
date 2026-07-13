@@ -5,6 +5,7 @@
  */
 
 import { createRequire } from 'module';
+import { pickCacheableClass } from './ai-resolver.js';
 const require = createRequire(import.meta.url);
 const elementMappings = require('../knowledge-base/element-mappings.json');
 
@@ -22,8 +23,7 @@ const elementMappings = require('../knowledge-base/element-mappings.json');
  * @param {string} selector - Full CSS selector path from ticket
  */
 export function lookupElementId(siteId, urlPath, selector) {
-  const classes = (selector ?? '').match(/\.([\w-]+)/g) ?? [];
-  const cssClass = classes.at(-1) ?? null;
+  const cssClass = pickCacheableClass(selector);
   if (!cssClass) return null;
 
   const match = elementMappings.mappings.find(

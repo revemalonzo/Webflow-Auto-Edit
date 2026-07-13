@@ -85,7 +85,15 @@ export function checkSkipConditions(ticket) {
     /\barrange\b.*\bin (this|that) order\b/i,
     /\badd (a|another) (sentence|page|section|paragraph)\b/i,
     /\bunder\s+"[^"]+"\s+change\b/i,
-    /\?\s*$/,
+    // A trailing "?" alone is NOT a reliable instruction signal -- confirmed real
+    // false positive (2026-07-11): short marketing headlines/CTAs that are
+    // themselves meant to be on-page text ("READY TO START YOUR JOURNEY?") got
+    // rejected by a bare /\?\s*$/ check. Only flag a trailing "?" as a genuine
+    // question directed at the editor when it also opens with a question-word/
+    // auxiliary-verb construction -- real instruction-phrased questions ("Should
+    // we change this?", "Is this the right wording?") start this way; standalone
+    // headline copy does not.
+    /^(should|can|could|would|is|are|do|does|did|will|have|has)\b.*\?\s*$/i,
   ];
   if (instructionSignals.some((re) => re.test(newValue))) {
     return skip('Warning: Automation skipped -- this reads as an instruction/question directed at an editor, not literal replacement text (e.g. "change this to say...", "add a sentence...", "arrange...in this order"). Writing it verbatim would corrupt the field. Requires manual review to determine the actual intended text.');

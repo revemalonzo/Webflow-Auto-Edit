@@ -14,7 +14,8 @@ import { routeTicket, resolvePageTemplateCollection } from './router.js';
 import { checkSkipConditions } from './skip-checker.js';
 import { isStaticSkip } from './field-mapper.js';
 import { updateCmsField, updateCmsLinkTarget } from './cms-updater.js';
-import { updateStaticElement, BRIDGE_APP_REQUIRED_MSG } from './static-updater.js';
+import { listCollections } from './webflow-client.js';
+import { updateStaticElement } from './static-updater.js';
 import { diagnoseRequest } from './ai-resolver.js';
 import { passToQA, applySkipTreatment, postComment, postCommentIfNew } from './linear-client.js';
 
@@ -87,7 +88,12 @@ function extractTicketFields(description = '') {
  */
 export async function processTicket(ticket, siteId, wfToken, wfShortName, collectionsCache, pagesCache) {
   const existingLabelIds = ticket.labels?.nodes?.map((l) => l.id) ?? [];
-  let fields = extractTicketFields(ticket.description);
+  // ticket.description can be `null` (confirmed live, three tickets in the same
+  // batch) -- a default parameter doesn't catch that (JS defaults only apply to
+  // `undefined`), so extractTicketFields's own `= ''` default was silently
+  // bypassed and every `.match()` call inside it threw, turning a genuinely
+  // empty/missing-data ticket into a crash instead of a clean skip.
+  let fields = extractTicketFields(ticket.description ?? '');
 
   // BugHerd fallback for missing data
   if ((!fields.selector || !fields.htmlSnapshot || !fields.pageUrl) && fields.bugherdProjectId) {
@@ -184,18 +190,48 @@ export async function processTicket(ticket, siteId, wfToken, wfShortName, collec
         { test: /\bcoach\b/i, collection: 'Coaches' },
         { test: /step-card|steps-card/i, collection: '3 Steps' },
       ];
+      const triedCollections = new Set([route.collection.toLowerCase()]);
       for (const { test, collection } of hints) {
         if (updateResult.success) break;
         if (collection.toLowerCase() === route.collection.toLowerCase()) continue;
         if (!collectionsCache.has(collection.toLowerCase())) continue;
         if (!test.test(fields.selector ?? '') && !test.test(fields.htmlSnapshot ?? '')) continue;
         console.log(`  CMS path failed on "${route.collection}" -- selector hints at "${collection}", retrying`);
+        triedCollections.add(collection.toLowerCase());
         const retryResult = await updateCmsField({
           siteId, token: wfToken, collectionName: collection, urlPath: route.urlPath,
           selector: fields.selector ?? '', htmlSnapshot: fields.htmlSnapshot ?? '', newValue: fields.newValue,
           collectionsCache, dryRun: DRY_RUN,
         });
         if (retryResult.success) updateResult = retryResult;
+      }
+
+      // Still failed -- the hardcoded keyword hints above only cover a handful of
+      // known collection names (Locations/Coaches/3 Steps). Confirmed real gap
+      // (2026-07-11): sites built from other template variants have their own
+      // extra w-dyn-item-bearing collections (e.g. "Benefits", homepage "Programs"
+      // subtitle cards, a "Steps"/get-started collection, "FAQs", a "Final CTA"/
+      // banner collection) that this hint list never tries, so a genuinely
+      // resolvable CMS item was left as "CMS item not found" and skipped. Since
+      // the selector already confirms this IS a CMS collection-list item
+      // (w-dyn-item), fall back to actually enumerating every real collection
+      // this site has and trying each untried one -- resolveCmsTarget's own
+      // matching/scope-mismatch guards are what keep this safe, not the guess.
+      if (!updateResult.success) {
+        const allCollections = await listCollections(siteId, wfToken);
+        for (const c of allCollections) {
+          if (updateResult.success) break;
+          const key = c.displayName.toLowerCase();
+          if (triedCollections.has(key)) continue;
+          triedCollections.add(key);
+          console.log(`  CMS path still unresolved -- trying remaining site collection "${c.displayName}"`);
+          const retryResult = await updateCmsField({
+            siteId, token: wfToken, collectionName: c.displayName, urlPath: route.urlPath,
+            selector: fields.selector ?? '', htmlSnapshot: fields.htmlSnapshot ?? '', newValue: fields.newValue,
+            collectionsCache, dryRun: DRY_RUN,
+          });
+          if (retryResult.success) updateResult = retryResult;
+        }
       }
     }
 
@@ -223,7 +259,7 @@ export async function processTicket(ticket, siteId, wfToken, wfShortName, collec
       if (staticResult.success) {
         updateResult = staticResult;
         usedPath = 'static';
-      } else if (staticResult.needsMcpWrite || staticResult.error === BRIDGE_APP_REQUIRED_MSG) {
+      } else if (staticResult.needsMcpWrite) {
         // The static resolution is the true, more actionable outcome -- surface it
         // instead of the CMS-side "item not found" error, which is a red herring here
         // (this element was never going to be a CMS field).

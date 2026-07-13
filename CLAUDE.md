@@ -110,8 +110,24 @@ half that's false matters a lot:**
   repeated permission-classifier denials, not just caution: (a) editing one line of a multi-line
   paragraph where lines are separate String children around `<br>` — no safe partial-edit path
   exists; (b) overwriting an `HtmlEmbed`/`w-embed`'s raw `code` setting to change a text fragment
-  inside it, even when the full current code was verified first — embeds often bundle
-  scripts/iframes alongside visible text, and a full-code overwrite risks silently deleting that.
+  inside it when the embed's full code is NOT read first, or when it bundles more than the visible
+  text (scripts/iframes/other markup) — a full-code overwrite in that case risks silently deleting
+  the part you didn't check.
+  **REFINED 2026-07-13 (BUGHERD-51245, CrossFit Park Ave):** this is not an absolute ban on w-embed
+  writes — it's a ban on writing one *without verifying the embed's entire current code first*.
+  Confirmed safe and correct: read the embed's raw `code` via `get_settings` before touching
+  anything; if the ENTIRE code is exactly the one visible text fragment (no other tags, no
+  script/iframe siblings), a full-code overwrite is equivalent to a plain text replacement and
+  carries none of the risk this rule exists to prevent. Procedure that worked: (1) rule out a CMS
+  binding first — check whether a plausibly-matching CMS field exists on the collection, and if it
+  does, compare its actual current value against the embed's text; a field that merely has a
+  similar-sounding name (e.g. `areas-served`) is not proof it's the source — this ticket's
+  `areas-served` CMS field held a completely different, unrelated value, confirming the embed was
+  genuinely standalone, not CMS-bound; (2) `get_settings > all_raw_settings` on the embed element to
+  read the full `code` value; (3) only if step 2 shows nothing but the target text, write the full
+  replacement via `set_settings` (key `code`, same wrapping tag/classes, only the text changed);
+  (4) re-read the setting to confirm the write landed before publishing. Don't skip straight to
+  "needs bridge app" on an embed match — do steps 1-2 first, every time.
 
 ### Recipe for a headless image swap (MCP-powered session only)
 
@@ -168,12 +184,149 @@ CMS-bound link swaps are now a first-class capability, not an automatic disquali
   above) — it's a manual/interactive-session technique, documented here so it isn't re-discovered
   from scratch next time.
 
+## The `.w-richtext` cache-poisoning incident (2026-07-10/11)
+
+**Real production corruption, root-caused and fixed.** `learnFieldMapping`/`learnElementMapping`/
+`learnImageFieldMapping` (`ai-resolver.js`) all picked the CSS class to cache via
+`selector.match(/\.([\w-]+)/g).at(-1)` — the *last* class in the selector. Webflow's own
+auto-generated utility classes (`w-richtext`, `w-dyn-item`, `w-inline-block`, `w-container`,
+`w-embed`, etc. — anything Webflow stamps onto every element of a given TYPE, not tied to any
+specific field) are reliably the LAST class when a meaningful custom class is also present
+(`class="pricing-and-details w-richtext"`), so this heuristic learned "Programs + `.w-richtext`
+means `program-description-rt`" from one legitimately-matching ticket, then every later, unrelated
+ticket whose selector happened to end in `.w-richtext` on the Programs collection hit that same
+cache entry and got silently routed to `program-description-rt` — regardless of what field it
+actually should have hit. Confirmed real damage: two items on a live site had their real
+program-description RichText content overwritten down to a bare price string ("$109/month") by
+tickets that were actually trying to update a completely different field
+(`pricing-and-details-2`), whose own selector also happened to end in `.w-richtext`.
+
+**Fixed:** added `pickCacheableClass()` in `ai-resolver.js`, used by all three `learn*Mapping`
+functions, which filters out any class matching `^\.w-` before picking the last one. Purged 12
+already-poisoned cache entries across `field-mappings.json` (6), `element-mappings.json` (2), and
+`image-field-mappings.json` (4) — every entry across all three files whose cached `cssClass` was a
+bare Webflow utility class, not just the ones with confirmed damage. `matchFieldBySelector`
+(`cms-updater.js`, the live heuristic matcher, not the cache) does NOT have this bug — it requires
+an exact match against a real field slug, and utility classes never coincidentally equal one.
+
+**Recovery patterns worth knowing, in order of preference:**
+
+1. **Check the live production domain directly, not staging.** This pipeline only ever calls
+   `publishToStaging` — it never publishes to the real custom domain. So the actual production
+   site (e.g. `https://www.crossfitlynchburg.com/...`, not the `.webflow.io` staging URL) is
+   completely untouched by any bad write this pipeline makes, until someone manually publishes
+   staging to live. A plain `curl` of the live page's HTML recovered an exact, verbatim, zero-guess
+   original for a RichText field that ticket history alone couldn't reconstruct — this should be
+   the FIRST recovery attempt, before concluding anything is unrecoverable.
+2. **Search the full ticket history for the same page/item, not just the most recent tickets that
+   touched it.** The pipeline's own "Automated Update Applied" Linear comments record the full old
+   value on every write — an earlier ticket (processed before a corruption cascade, itself once a
+   "first, correct" write against the real field) may have captured the true original content
+   verbatim in its own comment, even if the more recent tickets' recorded "old value" is already
+   corrupted.
+3. Only if neither source has it: ask the user, and do not fabricate replacement content.
+
+**Standing lesson for any future cache-learning code:** never cache a mapping keyed on a class that
+Webflow itself generates as a structural/framework marker (anything `w-`-prefixed). Only meaningful,
+author-supplied custom classes are safe to use as a durable, cross-ticket cache key.
+
+## Don't stop at "revert the wrong write" — actually try to resolve the real target (2026-07-11)
+
+When a QA-failed ticket's wrong write gets reverted, the temptation is to report the real request as
+"needs manual handling" and stop there. Confirmed repeatedly the same session: with real effort, most
+of these WERE resolvable, just not by the first-pass heuristics. Patterns that worked:
+
+- **A field can be a clean, unambiguous full-value match even when the request looks like a "partial
+  edit."** A ticket asking to change "$35.00/Session" to "$25 a session" looks like a partial edit of
+  a larger block — but if the target RichText field's ENTIRE content is exactly `<h3>$35.00/Session</h3>`
+  and nothing else, a full-field write is exactly correct, not a scope-mismatch risk. Check the field's
+  actual current value before assuming a size-based guard should block it.
+- **When the ticket's own recorded selector/snapshot doesn't match anything on the live page, search
+  the FULL page structure (`get_all_elements`), not just a keyword/text search for words from the
+  ticket.** A search for the literal word "believe" found nothing on a page that, in full-tree view,
+  turned out to already have a "what we believe"-shaped section under a *different* heading
+  ("WHY MAVERICK EXISTS" instead of "WHAT WE BELIEVE") — the client's request was, naturally, asking
+  to change wording that's no longer the current wording, so searching for the NEW wording will
+  always miss. Read structure, don't just grep for the request's own words.
+- **A compound request (new headline + new body copy) often maps to two different techniques in the
+  same section**: a static heading (plain Designer element, MCP `set_text`) paired with a CMS-bound
+  RichText body directly beneath it (`updateCollectionItem`). Don't assume the whole section is one
+  or the other — check each piece.
+- **If a Linear ticket shows "No attachments" but a QA comment references an image the client
+  attached, check the underlying BugHerd task directly** (`getTaskDetails`) — the file may exist there
+  and simply never have synced into the Linear ticket description.
+- **Webflow's CMS Image field API rejects a bare external URL** (`{ url: "https://files.bugherd.com/..." }`
+  fails with `400 Missing fields`) — it needs to go through Cloudinary's fetch-transform proxy
+  (`cloudinary.js`'s `getImageUrls`, exactly like the existing image pipeline already does), not a raw
+  source URL, even though the field only ever stores a plain URL string either way.
+- **The permission classifier's stated reasoning is not infallible** — it once described verbatim,
+  ticket-provided copy as "fabricated content never provided by the client." The right response was
+  not to argue past the block or route around it, but to respect the block, point out the specific
+  factual disagreement to the user, and let them decide — which is exactly what surfaced the
+  confirmation needed to proceed correctly.
+
+## Wrong-field writes beyond the cache-poisoning bug (2026-07-11)
+
+Not every wrong-field write this week traced back to the `.w-richtext` cache bug above — several
+were separate, confirmed issues, found by actually checking live CMS state rather than trusting a
+ticket's own "Automated Update Applied" comment as proof the write landed somewhere sensible:
+
+- **`programs-home` image type: the resolver could land on the wrong image field even when a
+  reliable deterministic signal existed.** Programs collections commonly have 3 image-ish fields
+  (`image`, `image-mobile`, `program-image-home`) that a class/id heuristic or the AI fallback
+  can't reliably tell apart. `image-processor.js` already had a "prefer the field with `home` in
+  its slug" override for this image type, but it only fired as a *last resort*
+  (`!kbMatch && !primarySlug`) — so a wrong-but-non-null heuristic/AI match for `image-mobile`
+  silently won anyway. Confirmed on two separate Fitcorps Training Center tickets (BUGHERD-51187,
+  51190): the new photo landed on the program's detail-page mobile-hero field while the actual
+  homepage "Top Programs" card field (`program-image-home`) stayed on the old photo — QA correctly
+  reported "no changes" because they were looking at the card the client meant, not the field that
+  changed. **Fixed:** the home-slug preference is now unconditional for `programs-home`, not a
+  fallback. Standing lesson: when a genuinely reliable deterministic signal exists for a field
+  choice, it should override AI/heuristic results outright, not just fill in when they're silent.
+- **Generic single-segment→"Pages - Hero Sections" routing keeps misrouting long-form About-page
+  content on sites that also have a dedicated About-page RichText field.** Confirmed on three
+  separate sites this week (PSP3, MRG MMA, and the earlier Bridge Performance/Tusky
+  Valley/crossfitlynchburg cache-poisoning cases): a founder-story/about-us-shaped request landed
+  on a page's generic hero `paragraph` field (often overflowing its container, since hero
+  paragraphs are meant to be one short line) instead of the real, purpose-built RichText section
+  (`Main templates → about-us`, rendered under a static "About the gym"/"About our School"
+  heading). The fix each time was the same: read the live page's full element tree
+  (`get_all_elements`) to find the real RichText target, write there, and either restore or clear
+  the wrongly-hit hero paragraph (restore if the original value was recorded; clear to null,
+  never fabricate, if it wasn't — several sibling hero items on the same collection already have a
+  null paragraph, confirming that's a valid state, not a broken one).
+- **When "fixing" a wrong write, always re-read the field's CURRENT live value before writing —
+  never trust a stale ticket-comment history for what "correct" looks like.** Confirmed twice this
+  session: (1) on PSP3, an initial fix attempt fully replaced an existing, legitimate founder bio
+  with new ticket content instead of appending it — caught immediately by noticing the destroyed
+  text was specific and clearly not placeholder, self-corrected before it shipped. (2) On a Rookies
+  Kids Fitness ticket (BUGHERD-51299), an old "Automated Update Applied" comment described a flat
+  content overwrite that looked fabricated — but checking the *live* field showed a human editor
+  had since reorganized it into a sensible two-section structure. Reverting to the old comment's
+  "original" value would have destroyed that legitimate follow-up work. Always diff against
+  current live state, not historical comments, before deciding a write is wrong.
+- **A diagnosis call is not deterministic even on identical input.** The same ticket (an empty
+  `<div class="hero-img-overlay">` with a real image attached) was diagnosed differently — literal,
+  ambiguous, structural — across three separate calls with otherwise identical input. None of the
+  five OpenAI calls in `ai-resolver.js` set `temperature`, so they ran at the default (1.0).
+  **Fixed:** all five now set `temperature: 0`. This doesn't guarantee determinism, but it removes
+  a meaningful source of flip-flopping — treat any pattern that still disagrees with itself at
+  temperature 0 as a genuinely hard case, not noise to route around.
+- **A single rate-limited `publishToStaging` call could crash the entire run, not just that one
+  batch.** `main()`'s only top-level catch calls `process.exit(1)` — so a 429 on one site's publish
+  (confirmed: hitting the same site's publish endpoint repeatedly across several back-to-back
+  batches triggers this) killed every remaining ticket in the run, even ones on completely
+  unrelated sites, even though their CMS writes had already succeeded and just weren't published
+  yet. **Fixed:** `processBatch`'s publish call is now wrapped in its own try/catch — a publish
+  failure logs loudly and the run continues; the CMS write itself is not lost, just not yet
+  pushed to the staging preview. If you're intentionally running many tickets for the *same* site
+  back-to-back (e.g. a targeted retry batch via `HYBRID_BATCH_URLS`), space them out or expect to
+  need a manual consolidating publish afterward — this fix stops the crash but doesn't add
+  publish-level rate-limit backoff.
+
 ## Known gaps / next work
 
-- `.github/workflows/run.yml` still runs the old `src/index.js` (text-only), and its secrets list
-  is missing `OPENAI_API_KEY` and `CLOUDINARY_CLOUD_NAME` — if its schedule were re-enabled as-is,
-  it would run with **no AI diagnosis at all**, exactly the safety gate everything above depends
-  on. Fix this before ever re-enabling its cron trigger.
 - `src/index.js` and `src/image-index.js` are superseded by `hybrid-index.js` but still present;
   worth deprecating explicitly (update `package.json` scripts and the GH workflow to point at
   `hybrid-index.js`) rather than leaving three entry points that can drift out of sync.

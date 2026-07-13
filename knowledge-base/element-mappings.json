@@ -114,22 +114,6 @@
       "_learnedAt": "2026-07-09T23:46:56.617Z"
     },
     {
-      "siteId": "64df7a943e7285560d8b1be7",
-      "urlPath": "/challenges-and-events",
-      "cssClass": ".w-dyn-item",
-      "elementId": "655ae199-0ef0-8ea2-8167-53acedd5cff0",
-      "scopeComponentId": null,
-      "_learnedAt": "2026-07-09T23:50:00.217Z"
-    },
-    {
-      "siteId": "62bef57d4af2c40d3b4c05c8",
-      "urlPath": "/",
-      "cssClass": ".w-nav-link",
-      "elementId": "dd6a6fa0-fe6d-151c-b5ed-122550bd9051",
-      "scopeComponentId": "0da1171f-ad0c-46b0-f8b9-22b81dbab2d1",
-      "_learnedAt": "2026-07-10T03:54:40.782Z"
-    },
-    {
       "siteId": "684876b9f3262fc7123d2544",
       "urlPath": "/membership-pricing-request",
       "cssClass": ".secondary-section-pricing",
@@ -216,6 +200,38 @@
       "elementId": "588daf40-2b6a-1b79-2348-ab1045d536d0",
       "scopeComponentId": null,
       "_learnedAt": "2026-07-10T09:16:42.806Z"
+    },
+    {
+      "siteId": "66bcf1645ee466e423e7d69f",
+      "urlPath": "/about-the-roost-crossfit-in-puyallup-wa",
+      "cssClass": ".fc-white",
+      "elementId": "04401d17-6d24-3dd3-4cae-b53d17e335af",
+      "scopeComponentId": null,
+      "_learnedAt": "2026-07-12T22:59:16.533Z"
+    },
+    {
+      "siteId": "66bcf1645ee466e423e7d69f",
+      "urlPath": "/",
+      "cssClass": ".heading-3",
+      "elementId": "66d1ba1c-c20c-5dca-11d0-64be3ffab3f6",
+      "scopeComponentId": "591ea973-d2eb-a0ad-2852-0ed638b81e26",
+      "_learnedAt": "2026-07-12T23:01:23.691Z"
+    },
+    {
+      "siteId": "6971448606dc466389278890",
+      "urlPath": "/programs/official-hyrox-training-club-for-parramatta",
+      "cssClass": ".rt-program-description",
+      "elementId": "131b6a23-3989-7576-afff-04ff6a7bf389",
+      "scopeComponentId": null,
+      "_learnedAt": "2026-07-12T23:03:46.504Z"
+    },
+    {
+      "siteId": "69d6d6936898a3b40cfb7821",
+      "urlPath": "/",
+      "cssClass": ".text-link",
+      "elementId": "fea356fb-33c3-ab19-90a7-f6e470e0561b",
+      "scopeComponentId": "c90329bc-cc1d-8a15-6ecb-17fb22e37953",
+      "_learnedAt": "2026-07-13T01:51:54.528Z"
     }
   ]
 }

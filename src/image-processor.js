@@ -241,8 +241,17 @@ export async function processImageTicket(ticket, siteId, wfToken, wfShortName, s
   // selector alone -- confirmed the AI fallback is inconsistent here too (picks the
   // hero's own image/image-mobile instead). The homepage grid display field always
   // signals "home" in its slug -- prefer that deterministically for this image type.
-  if (!kbMatch && !primarySlug && route.imageType === 'programs-home') {
-    primarySlug = imageFields.find((f) => f.slug.includes('home'))?.slug ?? null;
+  // CONFIRMED REAL DAMAGE (2026-07-11, two separate tickets/sites): this override
+  // previously only fired as a last resort (`!primarySlug`), so a wrong-but-non-null
+  // heuristic/AI match for "image-mobile" instead of "program-image-home" silently
+  // won -- the new photo landed on the program's detail-page mobile hero field
+  // instead of the actual homepage card field, so the client's requested change
+  // never appeared anywhere they were looking (staging homepage or Designer).
+  // Since the "home" slug is a reliable, unambiguous signal for this image type,
+  // it must win unconditionally here, not just when nothing else matched.
+  if (route.imageType === 'programs-home') {
+    const homeSlug = imageFields.find((f) => f.slug.includes('home'))?.slug ?? null;
+    if (homeSlug) primarySlug = homeSlug;
   }
 
   if (!primarySlug) {

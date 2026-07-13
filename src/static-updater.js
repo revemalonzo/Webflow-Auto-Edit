@@ -27,18 +27,17 @@ import { lookupElementId } from './element-mapper.js';
 //
 // There IS a working mechanism: Webflow's Designer/App API (reached via an MCP
 // connection, e.g. data_element_tool.set_text) writes plain page-level static text
-// headlessly, with NO locale restriction -- confirmed live. It cannot, however,
-// write text nested inside a Component definition (scopeComponentId set) without
-// first opening that component's canvas in an actual live Designer session
-// (designer_tool.open_component_view errors "Unable to connect to Webflow Designer"
-// otherwise) -- this is the client's own "bridge app" workflow. Since MCP tools are
-// only reachable from an interactive Claude session (not from this standalone Node
-// script), this pipeline cannot perform either write itself -- it resolves the
-// target and returns needsMcpWrite so the caller can complete it via the MCP
-// element tool (component-scoped targets still can't be completed headlessly).
-export const BRIDGE_APP_REQUIRED_MSG =
-  '⚠️ Automation skipped — this text lives inside a Webflow Component definition. Writing it requires ' +
-  'a live Webflow Designer session for that component (the "bridge app"). Needs manual Designer edit.';
+// headlessly, with NO locale restriction -- confirmed live. CORRECTED 2026-07-11
+// (was previously believed to require a live Designer session, per stale reasoning
+// below that generated real wrong-skip damage on several tickets): component-scoped
+// text (scopeComponentId set) is ALSO headlessly writable via the same MCP element
+// tool, using `scope_component_id` -- confirmed working live across several sites
+// this session (see CLAUDE.md's "headless component/image/link edits" section and
+// [[webflow_pipeline_safety_rules]] item 9). Since MCP tools are only reachable from
+// an interactive Claude session (not from this standalone Node script), this
+// pipeline still cannot perform either write itself -- both plain-page and
+// component-scoped targets resolve to needsMcpWrite so the caller (an MCP-connected
+// session) can complete them via the MCP element tool.
 
 /**
  * Resolve (but do not write) a static element's text target.
@@ -210,15 +209,13 @@ export async function updateStaticElement({
 
 /**
  * A resolved (page, element) target is never written by this script -- see the
- * module note above. Component-scoped targets are a hard dead-end here (need a
- * live Designer session); plain page targets can be completed via the MCP
- * element tool by whatever's orchestrating this run.
+ * module note above. Both plain-page and component-scoped targets can be
+ * completed via the MCP element tool (scope_component_id for the latter) by
+ * whatever's orchestrating this run -- neither actually needs a live Designer
+ * session (see the corrected module note above).
  */
 function resolvedResult({ pageId, elementId, scopeComponentId, oldValue }) {
-  if (scopeComponentId) {
-    return { success: false, error: BRIDGE_APP_REQUIRED_MSG, pageId, elementId, scopeComponentId, oldValue };
-  }
-  return { success: false, needsMcpWrite: true, pageId, elementId, scopeComponentId: null, oldValue };
+  return { success: false, needsMcpWrite: true, pageId, elementId, scopeComponentId: scopeComponentId ?? null, oldValue };
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────

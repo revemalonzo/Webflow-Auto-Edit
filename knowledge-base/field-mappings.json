@@ -61,22 +61,10 @@
       "_learnedAt": "2026-07-09T16:36:49.728Z"
     },
     {
-      "collection": "Programs",
-      "cssClass": ".w-richtext",
-      "fieldSlug": "program-description-rt",
-      "_learnedAt": "2026-07-09T16:59:23.595Z"
-    },
-    {
       "collection": "FAQs",
       "cssClass": ".fc-white",
       "fieldSlug": "answer-3",
       "_learnedAt": "2026-07-09T16:59:26.053Z"
-    },
-    {
-      "collection": "Programs",
-      "cssClass": ".w-richtext",
-      "fieldSlug": "description",
-      "_learnedAt": "2026-07-09T16:59:30.748Z"
     },
     {
       "collection": "Pages - Hero Sections",
@@ -133,12 +121,6 @@
       "_learnedAt": "2026-07-09T23:41:48.277Z"
     },
     {
-      "collection": "Events/Challenges",
-      "cssClass": ".w-inline-block",
-      "fieldSlug": "steps-cta-text",
-      "_learnedAt": "2026-07-09T23:49:10.620Z"
-    },
-    {
       "collection": "Programs",
       "cssClass": ".heading-7",
       "fieldSlug": "program-title-text",
@@ -149,12 +131,6 @@
       "cssClass": ".text-link",
       "fieldSlug": "paragraph",
       "_learnedAt": "2026-07-09T23:50:43.114Z"
-    },
-    {
-      "collection": "Pages - Hero Sections",
-      "cssClass": ".w-richtext",
-      "fieldSlug": "paragraph",
-      "_learnedAt": "2026-07-10T03:08:49.501Z"
     },
     {
       "collection": "Locations",
@@ -185,12 +161,6 @@
       "cssClass": ".class-item",
       "fieldSlug": "cta-page-link-2",
       "_learnedAt": "2026-07-10T04:36:21.067Z"
-    },
-    {
-      "collection": "Pages - Hero Sections",
-      "cssClass": ".w-inline-block",
-      "fieldSlug": "cta-text",
-      "_learnedAt": "2026-07-10T04:37:16.224Z"
     },
     {
       "collection": "Pages - Hero Sections",
@@ -241,16 +211,298 @@
       "_learnedAt": "2026-07-10T08:02:59.971Z"
     },
     {
-      "collection": "Coaches",
-      "cssClass": ".w-richtext",
-      "fieldSlug": "coach-bio",
-      "_learnedAt": "2026-07-10T08:03:47.241Z"
-    },
-    {
       "collection": "3 Steps",
       "cssClass": ".steps-card",
       "fieldSlug": "step-2-title",
       "_learnedAt": "2026-07-10T09:20:09.567Z"
+    },
+    {
+      "collection": "Programs",
+      "cssClass": ".text-link",
+      "fieldSlug": "name",
+      "_learnedAt": "2026-07-10T16:49:21.648Z"
+    },
+    {
+      "collection": "Pages - Hero Sections",
+      "cssClass": ".program-summary",
+      "fieldSlug": "paragraph",
+      "_learnedAt": "2026-07-10T16:50:28.195Z"
+    },
+    {
+      "collection": "Benefits Section",
+      "cssClass": ".heading-2",
+      "fieldSlug": "name",
+      "_learnedAt": "2026-07-10T23:12:24.670Z"
+    },
+    {
+      "collection": "CTA Sections",
+      "cssClass": ".benfit-paragraph-spacer",
+      "fieldSlug": "paragraph",
+      "_learnedAt": "2026-07-10T23:12:45.232Z"
+    },
+    {
+      "collection": "3 Steps",
+      "cssClass": ".benfit-paragraph-spacer",
+      "fieldSlug": "step-3-description",
+      "_learnedAt": "2026-07-10T23:13:03.196Z"
+    },
+    {
+      "collection": "Benefits Section",
+      "cssClass": ".benfit-paragraph-spacer",
+      "fieldSlug": "description",
+      "_learnedAt": "2026-07-10T23:13:17.312Z"
+    },
+    {
+      "collection": "3 Steps",
+      "cssClass": ".benfit-paragraph-spacer",
+      "fieldSlug": "step-1-description",
+      "_learnedAt": "2026-07-10T23:14:39.547Z"
+    },
+    {
+      "collection": "3 Steps",
+      "cssClass": ".benfit-paragraph-spacer",
+      "fieldSlug": "step-2-description",
+      "_learnedAt": "2026-07-10T23:15:13.558Z"
+    },
+    {
+      "collection": "Benefits Section",
+      "cssClass": ".heading-spacer",
+      "fieldSlug": "name",
+      "_learnedAt": "2026-07-10T23:15:31.937Z"
+    },
+    {
+      "collection": "CTA Sections",
+      "cssClass": ".heading-spacer",
+      "fieldSlug": "text",
+      "_learnedAt": "2026-07-10T23:15:33.531Z"
+    },
+    {
+      "collection": "Amenities",
+      "cssClass": ".heading-spacer",
+      "fieldSlug": "name",
+      "_learnedAt": "2026-07-10T23:15:39.805Z"
+    },
+    {
+      "collection": "Recipes: Databases",
+      "cssClass": ".heading-spacer",
+      "fieldSlug": "name",
+      "_learnedAt": "2026-07-10T23:15:41.558Z"
+    },
+    {
+      "collection": "Blog: Articles",
+      "cssClass": ".heading-spacer",
+      "fieldSlug": "name",
+      "_learnedAt": "2026-07-10T23:15:45.024Z"
+    },
+    {
+      "collection": "3 Steps",
+      "cssClass": ".heading-spacer",
+      "fieldSlug": "step-1-title",
+      "_learnedAt": "2026-07-10T23:15:52.282Z"
+    },
+    {
+      "collection": "CTA Sections",
+      "cssClass": ".fc-black",
+      "fieldSlug": "cta-text",
+      "_learnedAt": "2026-07-10T23:16:09.149Z"
+    },
+    {
+      "collection": "GROW Entries",
+      "cssClass": ".fc-black",
+      "fieldSlug": "grow-twilio-phone-number",
+      "_learnedAt": "2026-07-10T23:16:14.062Z"
+    },
+    {
+      "collection": "Events/Challenges",
+      "cssClass": ".main-heading",
+      "fieldSlug": "steps-heading",
+      "_learnedAt": "2026-07-10T23:22:19.710Z"
+    },
+    {
+      "collection": "Appointments",
+      "cssClass": ".fc-white",
+      "fieldSlug": "cta-text",
+      "_learnedAt": "2026-07-10T23:32:25.953Z"
+    },
+    {
+      "collection": "Locations",
+      "cssClass": ".is-about-page",
+      "fieldSlug": "location-about-2",
+      "_learnedAt": "2026-07-12T08:00:48.671Z"
+    },
+    {
+      "collection": "Pages - Hero Sections",
+      "cssClass": ".about-us",
+      "fieldSlug": "heading",
+      "_learnedAt": "2026-07-12T22:58:30.205Z"
+    },
+    {
+      "collection": "Programs",
+      "cssClass": ".about-us",
+      "fieldSlug": "program-title-text",
+      "_learnedAt": "2026-07-12T22:58:32.981Z"
+    },
+    {
+      "collection": "Pages - Hero Sections",
+      "cssClass": ".about-us",
+      "fieldSlug": "paragraph",
+      "_learnedAt": "2026-07-12T22:59:20.671Z"
+    },
+    {
+      "collection": "Programs",
+      "cssClass": ".about-us",
+      "fieldSlug": "program-description-rt",
+      "_learnedAt": "2026-07-12T22:59:23.147Z"
+    },
+    {
+      "collection": "CTA Sections",
+      "cssClass": ".paragraph-cta",
+      "fieldSlug": "cta-text",
+      "_learnedAt": "2026-07-12T22:59:48.423Z"
+    },
+    {
+      "collection": "GROW Entries",
+      "cssClass": ".paragraph-cta",
+      "fieldSlug": "grow-twilio-phone-number",
+      "_learnedAt": "2026-07-12T22:59:53.618Z"
+    },
+    {
+      "collection": "Pages - Hero Sections",
+      "cssClass": ".heading-3",
+      "fieldSlug": "heading",
+      "_learnedAt": "2026-07-12T23:00:24.655Z"
+    },
+    {
+      "collection": "Programs",
+      "cssClass": ".heading-3",
+      "fieldSlug": "name",
+      "_learnedAt": "2026-07-12T23:00:27.447Z"
+    },
+    {
+      "collection": "Benefits Section",
+      "cssClass": ".heading-3",
+      "fieldSlug": "name",
+      "_learnedAt": "2026-07-12T23:00:37.726Z"
+    },
+    {
+      "collection": "CTA Sections",
+      "cssClass": ".heading-3",
+      "fieldSlug": "slug",
+      "_learnedAt": "2026-07-12T23:00:40.043Z"
+    },
+    {
+      "collection": "Local Guide: Articles",
+      "cssClass": ".heading-3",
+      "fieldSlug": "name",
+      "_learnedAt": "2026-07-12T23:00:43.949Z"
+    },
+    {
+      "collection": "Amenities",
+      "cssClass": ".heading-3",
+      "fieldSlug": "name",
+      "_learnedAt": "2026-07-12T23:00:48.717Z"
+    },
+    {
+      "collection": "Recipes: Databases",
+      "cssClass": ".heading-3",
+      "fieldSlug": "name",
+      "_learnedAt": "2026-07-12T23:00:52.047Z"
+    },
+    {
+      "collection": "Blog: Articles",
+      "cssClass": ".heading-3",
+      "fieldSlug": "name",
+      "_learnedAt": "2026-07-12T23:00:55.144Z"
+    },
+    {
+      "collection": "Events/Challenges",
+      "cssClass": ".heading-3",
+      "fieldSlug": "location",
+      "_learnedAt": "2026-07-12T23:00:56.874Z"
+    },
+    {
+      "collection": "Blog: Categories",
+      "cssClass": ".heading-3",
+      "fieldSlug": "name",
+      "_learnedAt": "2026-07-12T23:01:00.850Z"
+    },
+    {
+      "collection": "Locations",
+      "cssClass": ".heading-3",
+      "fieldSlug": "name",
+      "_learnedAt": "2026-07-12T23:01:02.668Z"
+    },
+    {
+      "collection": "Icons Library",
+      "cssClass": ".heading-3",
+      "fieldSlug": "name",
+      "_learnedAt": "2026-07-12T23:01:08.952Z"
+    },
+    {
+      "collection": "Appointments",
+      "cssClass": ".fc-black",
+      "fieldSlug": "cta-text",
+      "_learnedAt": "2026-07-12T23:02:38.456Z"
+    },
+    {
+      "collection": "Benefits Section",
+      "cssClass": ".text-link",
+      "fieldSlug": "name",
+      "_learnedAt": "2026-07-13T01:51:27.217Z"
+    },
+    {
+      "collection": "CTA Sections",
+      "cssClass": ".text-link",
+      "fieldSlug": "cta-text",
+      "_learnedAt": "2026-07-13T01:51:29.463Z"
+    },
+    {
+      "collection": "Local Guide: Articles",
+      "cssClass": ".text-link",
+      "fieldSlug": "name",
+      "_learnedAt": "2026-07-13T01:51:32.756Z"
+    },
+    {
+      "collection": "Amenities",
+      "cssClass": ".text-link",
+      "fieldSlug": "name",
+      "_learnedAt": "2026-07-13T01:51:35.981Z"
+    },
+    {
+      "collection": "Recipes: Databases",
+      "cssClass": ".text-link",
+      "fieldSlug": "name",
+      "_learnedAt": "2026-07-13T01:51:37.694Z"
+    },
+    {
+      "collection": "Pricings",
+      "cssClass": ".text-link",
+      "fieldSlug": "name",
+      "_learnedAt": "2026-07-13T01:51:42.264Z"
+    },
+    {
+      "collection": "Blog: Categories",
+      "cssClass": ".text-link",
+      "fieldSlug": "name",
+      "_learnedAt": "2026-07-13T01:51:43.922Z"
+    },
+    {
+      "collection": "Locations",
+      "cssClass": ".text-link",
+      "fieldSlug": "cta-text",
+      "_learnedAt": "2026-07-13T01:51:46.104Z"
+    },
+    {
+      "collection": "Icons Library",
+      "cssClass": ".text-link",
+      "fieldSlug": "name",
+      "_learnedAt": "2026-07-13T01:51:51.102Z"
+    },
+    {
+      "collection": "Appointments",
+      "cssClass": ".text-link",
+      "fieldSlug": "cta-text",
+      "_learnedAt": "2026-07-13T01:51:53.007Z"
     }
   ]
 }

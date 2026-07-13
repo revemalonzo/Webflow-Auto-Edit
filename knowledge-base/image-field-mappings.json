@@ -44,34 +44,10 @@
     {
       "collection": "Programs",
       "imageType": "programs-hero",
-      "cssClass": ".w-container",
-      "fieldSlug": "gallery-image-1",
-      "mobileFieldSlug": "gallery-image-1",
-      "_learnedAt": "2026-07-09T23:48:19.725Z"
-    },
-    {
-      "collection": "Programs",
-      "imageType": "programs-hero",
-      "cssClass": ".w-container",
-      "fieldSlug": "image",
-      "mobileFieldSlug": "image-mobile",
-      "_learnedAt": "2026-07-09T23:48:26.887Z"
-    },
-    {
-      "collection": "Programs",
-      "imageType": "programs-hero",
       "cssClass": ".hero-image-gradient",
       "fieldSlug": "image",
       "mobileFieldSlug": "image-mobile",
       "_learnedAt": "2026-07-09T23:48:45.418Z"
-    },
-    {
-      "collection": "Programs",
-      "imageType": "programs-home",
-      "cssClass": ".w-dyn-items",
-      "fieldSlug": "program-image-home",
-      "mobileFieldSlug": null,
-      "_learnedAt": "2026-07-09T23:49:26.689Z"
     },
     {
       "collection": "Pages - Hero Sections",
@@ -114,14 +90,6 @@
       "_learnedAt": "2026-07-10T03:58:23.576Z"
     },
     {
-      "collection": "Coaches",
-      "imageType": "coaches",
-      "cssClass": ".w-embed",
-      "fieldSlug": "profile-image-2",
-      "mobileFieldSlug": null,
-      "_learnedAt": "2026-07-10T04:05:03.348Z"
-    },
-    {
       "collection": "Programs",
       "imageType": "programs-home",
       "cssClass": ".program-image",
@@ -160,6 +128,22 @@
       "fieldSlug": "image",
       "mobileFieldSlug": "image-mobile",
       "_learnedAt": "2026-07-10T04:49:07.210Z"
+    },
+    {
+      "collection": "Pages - Hero Sections",
+      "imageType": "header-sections",
+      "cssClass": ".mi-about-the-gym",
+      "fieldSlug": "image-1",
+      "mobileFieldSlug": "hero-image-3-mobile",
+      "_learnedAt": "2026-07-12T07:52:51.355Z"
+    },
+    {
+      "collection": "Programs",
+      "imageType": "programs-hero",
+      "cssClass": ".hyrox-sim",
+      "fieldSlug": "image",
+      "mobileFieldSlug": "image-mobile",
+      "_learnedAt": "2026-07-12T23:03:35.270Z"
     }
   ]
 }

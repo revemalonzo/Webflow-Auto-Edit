@@ -5,6 +5,7 @@
  */
 
 import { createRequire } from 'module';
+import { pickCacheableClass } from './ai-resolver.js';
 const require = createRequire(import.meta.url);
 const fieldMappings = require('../knowledge-base/image-field-mappings.json');
 
@@ -12,8 +13,7 @@ const fieldMappings = require('../knowledge-base/image-field-mappings.json');
  * @returns {{ primary: string, mobile: string|null } | null}
  */
 export function lookupImageFieldSlug(collection, imageType, selector) {
-  const classes = (selector ?? '').match(/\.([\w-]+)/g) ?? [];
-  const cssClass = classes.at(-1) ?? null;
+  const cssClass = pickCacheableClass(selector);
   if (!cssClass) return null;
 
   const match = fieldMappings.mappings.find(
