@@ -338,3 +338,15 @@ ticket's own "Automated Update Applied" comment as proof the write landed somewh
   OAuth-based App Connectors ("bare mode skips OAuth and keychain reads" — confirmed from
   Anthropic's own headless-mode docs), so Task Scheduler + headless Claude Code does not preserve
   the Webflow connector capability, only REST-reachable capability.
+- **Righteous Wellness: several page elements (map heading/subheading, a "Reviews" heading) are
+  built as a single shared Component instance reused across all 8 program pages plus the homepage,
+  not per-page CMS fields (2026-07-14).** Confirmed while working the site's backlog: 9 tickets
+  wanted different text for these elements on different program pages, but writing any of them
+  would change the text everywhere the component is placed, not just the one page the ticket is
+  about — three tickets (50620/50602/50558) even want three different, mutually exclusive values
+  for the literal same shared map-subheading element. This is not a "try harder to find the real
+  field" case like the About-page misroutes elsewhere in this doc — there IS no per-page field to
+  find; the site would need restructuring (turn the shared heading/subheading into real per-program
+  CMS-bound fields) before these are automatable, or a human needs to pick one winning value per
+  shared element and close the rest as duplicates/wontfix. Left all 9 tickets untouched in the
+  Live Edits Queue pending that decision.
