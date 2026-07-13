@@ -350,3 +350,11 @@ ticket's own "Automated Update Applied" comment as proof the write landed somewh
   CMS-bound fields) before these are automatable, or a human needs to pick one winning value per
   shared element and close the rest as duplicates/wontfix. Left all 9 tickets untouched in the
   Live Edits Queue pending that decision.
+- **LiveFIT 901: the same shared-Component pattern recurred (2026-07-14)** — a "Final Offer
+  Section" is one Component instance reused across every page, with its image bound to an internal
+  CMS-bound collection list rather than a per-page field. 7 tickets each asking to swap that
+  section's photo to a different attached image were left untouched for the same reason as
+  Righteous Wellness's map/reviews headings: writing any one of them would change the image
+  everywhere the component is placed. Worth checking whether these two sites share a template
+  origin, since the same structural gap appearing twice suggests it may be a common pattern across
+  this agency's site template family, not a one-off.
