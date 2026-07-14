@@ -141,14 +141,16 @@ half that's false matters a lot:**
    Confirmed reproducibly: the S3 upload can return 201 while Webflow's own asset record stays
    permanently stuck at `size: 0`. Referencing a broken asset in a CMS field write fails with
    `400 Bad Request: Missing fields`. Abort rather than write if the size never lands.
-   **2026-07-14: hit this 7 times in one afternoon across 4 unrelated sites** (CrossFit SHP x2,
-   Stone Strength Lab x2, Koda OKC x1, RISE Athletics x1, East Ridgefield CrossFit x1) working the
-   backlog — every single fresh-upload image-swap ticket attempted that day failed this way,
-   including retries on the same file (reusing an already-uploaded file by filename match, when
-   possible, worked fine — it's specifically new uploads that stuck at `size: 0`). That hit rate is
-   high enough it's worth treating as "Webflow's asset pipeline may be degraded right now" rather
-   than "this specific file/site is broken" — check for a run of image-swap failures across
-   unrelated sites in a short window as a signal to pause new-upload image work and retry later,
+   **2026-07-14: hit this 8 times in one day across 5 unrelated sites** (CrossFit SHP x2,
+   Stone Strength Lab x2, Koda OKC x1, RISE Athletics x1, East Ridgefield CrossFit x1, The Garden
+   Martial Arts x1) working the backlog — every single fresh-upload image-swap attempted that day
+   failed this way, including retries on the same file (reusing an already-uploaded file by
+   filename match, when possible, worked fine — it's specifically new uploads that stuck at
+   `size: 0`, confirmed twice in a row with a fresh poll on the same asset, not just one check).
+   That hit rate is high enough it's worth treating as "Webflow's asset pipeline may be degraded
+   right now" rather than "this specific file/site is broken" — check for a run of image-swap
+   failures across unrelated sites in a short window as a signal to pause new-upload image work
+   and retry later,
    rather than concluding each ticket individually needs manual handling.
 4. `data_element_tool > set_image_asset` (or `updateCollectionItem` for a genuine CMS field) with
    the verified asset ID.
